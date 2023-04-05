@@ -3,7 +3,6 @@ using Test
 using BenchmarkTools
 
 import DataFlows: Graph
-import DataFlows: getname, getvalue
 
 function collectgraph(g::Graph)
     c = []
