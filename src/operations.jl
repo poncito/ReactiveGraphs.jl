@@ -43,7 +43,12 @@ struct Stateful{F<:Function}
 end
 MapStateful{T,TState} = Map{T,TState,<:Stateful}
 
-function update!(m::Map, args...)
+struct MarkovStateful{F<:Function}
+    f::F
+end
+MapMarkovStateful{T,TState} = Map{T,TState,<:MarkovStateful}
+
+function update!(m::MapMarkovStateful, args...)
     m.x, m.state = m.f(m.x, m.state, args...)
 end
 

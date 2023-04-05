@@ -3,6 +3,7 @@ module DataFlows
 export input
 export Source
 export constant
+export Stateless, Stateful, Markov, MarkovStateful
 
 TypeOrValue{X} = Union{X,Type{X}}
 
@@ -20,9 +21,16 @@ function input(::Type{T}; name::Union{Nothing,Symbol}=nothing) where {T}
 end
 
 function Base.map(f::Function, args::Node...; name::Union{Nothing,Symbol}=nothing)
+    map(Stateless(f), args...; name)
+end
+
+_first(T::Type{<:Any}) = T
+_first(::Type{Tuple{T1,T2}}) where {T1,T2} = T1
+
+function Base.map(f::Union{Stateless,Markov,Stateful,MarkovStateful}, args::Node...; name::Union{Nothing,Symbol}=nothing)
     uniquename = genname(name)
-    T = Base._return_type(f, Tuple{(eltype(a) for a in args)...})
-    op = Map{T}(Stateless(f), nothing)
+    T = Base._return_type(f.f, Tuple{(eltype(a) for a in args)...}) |> _first
+    op = Map{T}(f, nothing)
     Node(uniquename, op, args...)
 end
 
