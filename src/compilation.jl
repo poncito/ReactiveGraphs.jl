@@ -90,6 +90,22 @@ function generate!(
     append!(expr.args, e.args) # appending to the function body
 end
 
+function generate!(
+    expr::Expr,
+    ::Symbol,
+    name::Symbol,
+    parentnames::NTuple{<:Any,Symbol},
+    ::Type{<:Constant},
+)
+    updated_s = Symbol(:updated, name)
+    initialized_s = Symbol(:initialized, name)
+    e = quote
+        $initialized_s = true
+        $updated_s = false
+    end
+    append!(expr.args, e.args) # appending to the function body
+end
+
 function getvalue(list::ListNode, name::Symbol)
     node = getnode(list, name)
     if getelement(node) isa Filter

@@ -61,3 +61,7 @@ end
 
 struct Filter <: Operation{Nothing} end
 
+struct Constant{T} <: Operation{T}
+    x::T
+end
+getvalue(c::Constant) = c.x

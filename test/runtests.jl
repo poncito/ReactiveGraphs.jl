@@ -96,3 +96,12 @@ end
     @test c == [3, 4]
 end
 
+@testset "constant" begin
+    c = []
+    n1 = input(Int)
+    n2 = constant(1)
+    map((x,y)->push!(c, x+y), n1, n2)
+    s = Source(n1)
+    s[] = 2
+    @test c == [3]
+end

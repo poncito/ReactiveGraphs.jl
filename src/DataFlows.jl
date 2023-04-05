@@ -2,6 +2,7 @@ module DataFlows
 
 export input
 export Source
+export constant
 
 TypeOrValue{X} = Union{X,Type{X}}
 
@@ -29,6 +30,12 @@ function Base.filter(condition::Node, x::Node; name::Union{Nothing,Symbol}=nothi
     uniquename = genname(name)
     op = Filter()
     Node(uniquename, op, condition, x)
+end
+
+function constant(x; name::Union{Nothing,Symbol}=nothing)
+    uniquename = genname(name)
+    op = Constant(x)
+    Node(uniquename, op)
 end
 
 end # module
