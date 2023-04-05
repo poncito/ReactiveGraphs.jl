@@ -16,29 +16,26 @@ end
 generate!(::Expr, ::Type{Root}, ::Symbol) = nothing
 function generate!(
     expr::Expr,
-    ::Type{ListNode{X,Next}},
+    ::Type{ListNode{name, parentnames, X, Next}},
     inputname::Symbol,
-) where {X, Next}
+) where {name, parentnames, X, Next}
     generate!(expr, Next, inputname) 
-    generate!(expr, X, inputname) 
+    generate!(expr, inputname, name, parentnames, X) 
     expr
 end
 
-NodeInput{nodename,A,O<:Input} = Node{nodename,A,O}
-NodeMap{nodename,A,O<:Map} = Node{nodename,A,O}
-NodeFilter{nodename,A,O<:Filter} = Node{nodename,A,O}
-
 function generate!(
     expr::Expr,
-    nodetype::Type{<:NodeInput},
     inputname::Symbol,
+    name::Symbol,
+    parentnames::NTuple{<:Any,Symbol},
+    ::Type{<:Input},
 )
-    nodename = getname(nodetype)
-    updated_s = Symbol(:updated, nodename)
-    initialized_s = Symbol(:initialized, nodename)
-    nodename_s = Meta.quot(nodename)
+    updated_s = Symbol(:updated, name)
+    initialized_s = Symbol(:initialized, name)
+    nodename_s = Meta.quot(name)
     e = quote
-        $updated_s = $(nodename == inputname) 
+        $updated_s = $(name == inputname) 
         node = getnode(list, $nodename_s)
         if $updated_s
             $(Expr(:call, :update!, :node, :x))
@@ -50,17 +47,17 @@ end
 
 function generate!(
     expr::Expr,
-    nodetype::Type{<:NodeMap},
-    ::Symbol,
+    inputname::Symbol,
+    name::Symbol,
+    parentnames::NTuple{<:Any,Symbol},
+    ::Type{<:Map},
 )
-    nodename = getname(nodetype)
-    argnames = getnames(nodetype)
-    updated_s = Symbol(:updated, nodename)
-    initialized_s = Symbol(:initialized, nodename)
-    nodename_s = Meta.quot(nodename)
-    args = (:(getvalue(list, $(Meta.quot(name)))) for name in argnames)
-    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in argnames)...)
-    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in argnames)...)
+    updated_s = Symbol(:updated, name)
+    initialized_s = Symbol(:initialized, name)
+    nodename_s = Meta.quot(name)
+    args = (:(getvalue(list, $(Meta.quot(n)))) for n in parentnames)
+    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
+    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
     e = quote
         $initialized_s = $condition_initialized
         $updated_s = if $initialized_s & $condition_updated
@@ -76,16 +73,16 @@ end
 
 function generate!(
     expr::Expr,
-    nodetype::Type{<:NodeFilter},
-    ::Symbol,
+    inputname::Symbol,
+    name::Symbol,
+    parentnames::NTuple{<:Any,Symbol},
+    ::Type{<:Filter},
 )
-    nodename = getname(nodetype)
-    argnames = getnames(nodetype)
-    updated_s = Symbol(:updated, nodename)
-    initialized_s = Symbol(:initialized, nodename)
-    args = [:(getvalue(list, $(Meta.quot(name)))) for name in argnames]
-    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in argnames)...)
-    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in argnames)...)
+    updated_s = Symbol(:updated, name)
+    initialized_s = Symbol(:initialized, name)
+    args = [:(getvalue(list, $(Meta.quot(n)))) for n in parentnames]
+    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
+    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
     e = quote
         $initialized_s = $condition_initialized
         $updated_s = $initialized_s & $condition_updated & $(args[1])
@@ -95,11 +92,11 @@ end
 
 function getvalue(list::ListNode, name::Symbol)
     node = getnode(list, name)
-    if node.operation isa Filter
-        _, node_name = getnames(node)
+    if getelement(node) isa Filter
+        _, node_name = getparentnames(node)
         getvalue(list, node_name) # todo: avoid starting from the leaf
     else
-        getvalue(node)
+        node |> getelement |> getvalue
     end
 end
 

@@ -7,7 +7,6 @@ TypeOrValue{X} = Union{X,Type{X}}
 
 include("graph.jl")
 include("operations.jl")
-include("node.jl")
 include("compilation.jl")
 
 genname(::Nothing) = gensym()

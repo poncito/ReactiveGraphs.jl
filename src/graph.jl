@@ -1,9 +1,17 @@
 struct Root end
 
-struct ListNode{X,Next}
+struct ListNode{name, parentnames, X, Next}
     x::X
     next::Next
+    function ListNode(name::Symbol, parentnames::NTuple{<:Any,Symbol}, x, next::Union{Root,ListNode})
+        new{name,parentnames,typeof(x),typeof(next)}(x, next)
+    end
 end
+
+getname(::TypeOrValue{ListNode{name}}) where {name} = name
+getparentnames(::TypeOrValue{ListNode{name, parentnames}}) where {name, parentnames} = parentnames
+getelement(n::ListNode) = n.x
+getnext(n::ListNode) = n.next
 
 mutable struct Graph
     last::Ref{Union{Root,ListNode}}
@@ -23,19 +31,19 @@ Base.map(f::Function, g::Graph) = map(f, g.last[])
 Base.map(::Function, ::Root) = nothing
 function Base.map(f::Function, n::ListNode)
     map(f, n.next)
-    f(n.x)
+    f(getname(n), getparentnames(n), n.x)
 end
 
-function Base.push!(graph::Graph, x)
-    graph[] = ListNode(x, graph[])
+function Base.push!(graph::Graph, name, parentnames, x)
+    graph[] = ListNode(name, parentnames, x, graph[])
     graph
 end
 
 Base.merge!(graph::Graph) = graph
 function Base.merge!(graph1::Graph, graph2::Graph, graphs...)
     if graph1 != graph2
-        map(graph2) do x
-            push!(graph1, x)
+        map(graph2) do name, parentnames, x
+            push!(graph1, name, parentnames, x)
         end
         graph2.last = graph1.last
     end
@@ -45,9 +53,32 @@ end
 # the error should be arise at the highest level of the recursion
 getnode(::Root, name::Symbol) = throw(ErrorException("symbol $(name) not found in graph"))
 function getnode(x::ListNode, name::Symbol)
-    if getname(x.x) == name
-        x.x
+    if getname(x) == name
+        x
     else
         getnode(x.next, name)
     end
 end
+
+struct Node{name}
+    graph::Graph
+    Node(name::Symbol, graph::Graph) = new{name}(graph)
+end
+
+getname(::TypeOrValue{Node{name}}) where {name} = name
+getgraph(node::Node) = node.graph
+
+function Node(name::Symbol, x::X, parents::Node...) where {X}
+    graph = if isempty(parents)
+        Graph()
+    else
+        merge!((n.graph for n in parents)...) # return Root() if empty
+    end
+    parentnames = Tuple(getname(a) for a in parents)
+    push!(graph, name, parentnames, x)
+    Node(name, graph)
+end
+
+update!(node, args...) = update!(getelement(node), args...)
+isinitialized(node, args...) = isinitialized(getelement(node), args...)
+(node::Node)(args...) = getelement(node)(args...)

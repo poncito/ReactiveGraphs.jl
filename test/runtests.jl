@@ -3,11 +3,11 @@ using Test
 using BenchmarkTools
 
 import DataFlows: Graph
-import DataFlows: getnode, getname, getvalue
+import DataFlows: getname, getvalue
 
 function collectgraph(g::Graph)
     c = []
-    map(x->push!(c, x), g)
+    map((_,_,x)->push!(c, x), g)
     c
 end
 
@@ -15,12 +15,12 @@ end
     g1 = Graph()
     @test g1 == merge!(g1) 
 
-    push!(g1, 1)
-    push!(g1, 2)
+    push!(g1, :a, (), 1)
+    push!(g1, :b, (), 2)
     @test collectgraph(g1) == [1, 2]
 
     g2 = Graph()
-    push!(g2, 3)
+    push!(g2, :c, (), 3)
     merge!(g1, g2)
     @test g1 == g2
 
