@@ -28,7 +28,7 @@ function generate!(
     expr::Expr,
     inputname::Symbol,
     name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
+    ::NTuple{<:Any,Symbol},
     ::Type{<:Input},
 )
     updated_s = Symbol(:updated, name)
@@ -40,14 +40,14 @@ function generate!(
         if $updated_s
             $(Expr(:call, :update!, :node, :x))
         end
-        $initialized_s = isinitialized(node) 
+        $initialized_s = $(name == inputname ? true : :(isinitialized(node)))
     end
     append!(expr.args, e.args)
 end
 
 function generate!(
     expr::Expr,
-    inputname::Symbol,
+    ::Symbol,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:Map},
@@ -73,7 +73,7 @@ end
 
 function generate!(
     expr::Expr,
-    inputname::Symbol,
+    ::Symbol,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:Filter},
