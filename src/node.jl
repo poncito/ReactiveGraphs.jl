@@ -25,12 +25,13 @@ end
 
 Base.eltype(::TypeOrValue{Node{T,name,A,O}}) where {T,name,A,O} = T
 getname(::TypeOrValue{Node{T,name,A,O}}) where {T,name,A,O} = name
-getname(::TypeOrValue{<:ListNode{X}}) where {X} = getname(X)
+getnames(::TypeOrValue{<:Node{T,name,A}}) where {T,name,A} = getnames(A)
 getvalue(x::Node) = getvalue(x.operation)
 getstate(x::Node) = getstate(x.operation)
 getoperation(node::Node) = node.operation
 getgraph(node::Node) = node.graph
-getnames(::Node{T,name,Args{names}}) where {T,name,names} = names
+
+getname(::TypeOrValue{<:ListNode{X}}) where {X} = getname(X)
 
 update!(node, args...) = update!(getoperation(node), args...)
 isinitialized(node, args...) = isinitialized(getoperation(node), args...)

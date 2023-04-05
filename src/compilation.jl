@@ -10,7 +10,6 @@ Source(node::Node) = Source(getname(node), getgraph(node)[])
         list = src.list
     end
     generate!(expr, LN, inputname)
-    @info "expr" expr
     expr
 end
 
@@ -21,48 +20,47 @@ function generate!(
     inputname::Symbol,
 ) where {X, Next}
     generate!(expr, Next, inputname) 
-    generate!(expr, X, Next, inputname) 
+    generate!(expr, X, inputname) 
     expr
 end
 
+NodeInput{T,nodename,A,O<:Input} = Node{T,nodename,A,O}
+NodeMap{T,nodename,A,O<:Map} = Node{T,nodename,A,O}
+NodeFilter{T,nodename,A,O<:Filter} = Node{T,nodename,A,O}
+
 function generate!(
     expr::Expr,
-    ::Type{<:Node{T,nodename,A,O}},
-    nexttype::Type{<:Union{Root,ListNode}},
+    nodetype::Type{<:NodeInput},
     inputname::Symbol,
-) where {T,nodename,A,O<:Input}
+)
+    nodename = getname(nodetype)
     updated_s = Symbol(:updated, nodename)
     initialized_s = Symbol(:initialized, nodename)
     nodename_s = Meta.quot(nodename)
-    e = if nodename == inputname
-        quote
-            $updated_s = true 
-            $initialized_s = true 
-            node = getnode(list, $nodename_s)
+    e = quote
+        $updated_s = $(nodename == inputname) 
+        node = getnode(list, $nodename_s)
+        if $updated_s
             $(Expr(:call, :update!, :node, :x))
         end
-    else
-        quote
-            $updated_s = false
-            node = getnode(list, $nodename_s)
-            $initialized_s = isinitialized(node) 
-        end
+        $initialized_s = isinitialized(node) 
     end
     append!(expr.args, e.args)
 end
 
 function generate!(
     expr::Expr,
-    ::Type{<:Node{T,nodename,A,O}},
-    nexttype::Type{<:Union{Root,ListNode}},
-    inputname::Symbol,
-) where {T,nodename,A,O<:Map}
+    nodetype::Type{<:NodeMap},
+    ::Symbol,
+)
+    nodename = getname(nodetype)
+    argnames = getnames(nodetype)
     updated_s = Symbol(:updated, nodename)
     initialized_s = Symbol(:initialized, nodename)
     nodename_s = Meta.quot(nodename)
-    args = (:(getvalue(list, $(Meta.quot(name)))) for name in getnames(A))
-    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in getnames(A))...)
-    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in getnames(A))...)
+    args = (:(getvalue(list, $(Meta.quot(name)))) for name in argnames)
+    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in argnames)...)
+    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in argnames)...)
     e = quote
         $initialized_s = $condition_initialized
         $updated_s = if $initialized_s & $condition_updated
@@ -78,15 +76,16 @@ end
 
 function generate!(
     expr::Expr,
-    ::Type{<:Node{T,nodename,A,O}},
-    nexttype::Type{<:Union{Root,ListNode}},
-    inputname::Symbol,
-) where {T,nodename,A,O<:Filter}
+    nodetype::Type{<:NodeFilter},
+    ::Symbol,
+)
+    nodename = getname(nodetype)
+    argnames = getnames(nodetype)
     updated_s = Symbol(:updated, nodename)
     initialized_s = Symbol(:initialized, nodename)
-    args = [:(getvalue(list, $(Meta.quot(name)))) for name in getnames(A)]
-    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in getnames(A))...)
-    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in getnames(A))...)
+    args = [:(getvalue(list, $(Meta.quot(name)))) for name in argnames]
+    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in argnames)...)
+    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in argnames)...)
     e = quote
         $initialized_s = $condition_initialized
         $updated_s = $initialized_s & $condition_updated & $(args[1])

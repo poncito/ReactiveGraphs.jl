@@ -43,7 +43,6 @@ MapStateful{T,TState} = Map{T,TState,<:Stateful}
 
 function update!(m::Map, args...)
     m.x, m.state = m.f(m.x, m.state, args...)
-    m.x
 end
 
 function update!(m::MapStateless, args...)
