@@ -1,5 +1,7 @@
 abstract type Operation{T} end
 
+Base.eltype(::TypeOrValue{Operation{T}}) where {T} = T
+
 mutable struct Input{T} <: Operation{T}
     isinitialized::Bool
     x::T

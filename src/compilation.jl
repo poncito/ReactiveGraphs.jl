@@ -24,9 +24,9 @@ function generate!(
     expr
 end
 
-NodeInput{T,nodename,A,O<:Input} = Node{T,nodename,A,O}
-NodeMap{T,nodename,A,O<:Map} = Node{T,nodename,A,O}
-NodeFilter{T,nodename,A,O<:Filter} = Node{T,nodename,A,O}
+NodeInput{nodename,A,O<:Input} = Node{nodename,A,O}
+NodeMap{nodename,A,O<:Map} = Node{nodename,A,O}
+NodeFilter{nodename,A,O<:Filter} = Node{nodename,A,O}
 
 function generate!(
     expr::Expr,
