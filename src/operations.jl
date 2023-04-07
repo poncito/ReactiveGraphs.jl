@@ -49,7 +49,7 @@ end
 MapMarkovStateful{T,TState} = Map{T,TState,<:MarkovStateful}
 
 function update!(m::MapMarkovStateful, args...)
-    m.x, m.state = m.f(m.x, m.state, args...)
+    m.x, m.state = m.f.f(m.x, m.state, args...)
 end
 
 function update!(m::MapStateless, args...)
