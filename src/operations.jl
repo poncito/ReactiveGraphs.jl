@@ -79,7 +79,15 @@ update!(m::MapMarkovStateful!, args...) = m.f.f(m.state, args...)
 
 struct Filter{T} <: Operation{T} end
 
-struct Constant{T} <: Operation{T}
+abstract type AbstractConstant{T} <: Operation{T} end
+struct TypeConstant{x,T} <: AbstractConstant{T}
+    TypeConstant(x::T) where {T} = new{x,T}()
+end
+getvalue(::TypeConstant{trueorfalse}) where {trueorfalse} = trueorfalse
+
+struct Constant{T} <: AbstractConstant{T}
     x::T
 end
 getvalue(c::Constant) = c.x
+
+struct Quiet{T} <: Operation{T} end

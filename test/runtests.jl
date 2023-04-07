@@ -130,7 +130,7 @@ end
 @testset "filter" begin
     n1 = input(Int)
     n2 = input(Bool)
-    n3 = filter(n2, n1)
+    n3 = filter(n1, n2)
     c = sink(n3)
     s1 = Source(n1)
     s2 = Source(n2)
@@ -151,5 +151,27 @@ end
     s = Source(n1)
     s[] = 2
     @test c == [3]
+
+    n1 = input(Bool)
+    n2 = constant(true)
+    c = sink(&, n1, n2)
+    s = Source(n1)
+    s[] = true
+    s[] = false
+    @test c == [true, false]
 end
 
+@testset "quiet" begin
+    n1 = input(Int)
+    n2 = input(Int)
+    n3 = quiet(n2)
+    c = sink(+, n1, n3)
+    s1 = Source(n1)
+    s2 = Source(n2)
+    s1[] = 1
+    s2[] = 2
+    s1[] = 3
+    s2[] = 4
+    s1[] = 5
+    @test c == [5, 9]
+end

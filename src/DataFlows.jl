@@ -3,6 +3,7 @@ module DataFlows
 export input
 export Source
 export constant
+export quiet
 
 TypeOrValue{X} = Union{X,Type{X}}
 
@@ -78,16 +79,26 @@ function Base.map!(f::Function, initialvalue, arg::Node, args::Node...; name::Un
     Node(uniquename, op, arg, args...)
 end
 
-function Base.filter(condition::Node, x::Node; name::Union{Nothing,Symbol}=nothing)
+function Base.filter(x::Node, condition::Node; name::Union{Nothing,Symbol}=nothing)
     uniquename = genname(name)
     op = Filter{getoperationtype(x)}()
-    Node(uniquename, op, condition, x)
+    Node(uniquename, op, x, condition)
 end
 
 function constant(x; name::Union{Nothing,Symbol}=nothing)
     uniquename = genname(name)
     op = Constant(x)
     Node(uniquename, op)
+end
+
+function constant(x::Bool; name::Union{Nothing,Symbol}=nothing)
+    uniquename = genname(name)
+    op = TypeConstant(x)
+    Node(uniquename, op)
+end
+
+function quiet(node::Node; name::Union{Nothing,Symbol}=nothing)
+    filter(node, constant(false); name)
 end
 
 _splittuple(T::Type{<:Any}) = T, Nothing

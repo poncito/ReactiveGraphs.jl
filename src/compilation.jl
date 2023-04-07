@@ -20,12 +20,12 @@ function generate!(
     inputname::Symbol,
 ) where {name, parentnames, X, Next}
     generate!(expr, Next, inputname) 
-    generate!(expr, inputname, name, parentnames, X) 
+    e = generate(inputname, name, parentnames, X) 
+    append!(expr.args, e.args)
     expr
 end
 
-function generate!(
-    expr::Expr,
+function generate(
     inputname::Symbol,
     name::Symbol,
     ::NTuple{<:Any,Symbol},
@@ -34,7 +34,7 @@ function generate!(
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     nodename_s = Meta.quot(name)
-    e = quote
+    quote
         $updated_s = $(name == inputname) 
         node = getnode(list, $nodename_s)
         if $updated_s
@@ -42,11 +42,9 @@ function generate!(
         end
         $initialized_s = $(name == inputname ? true : :(isinitialized(node)))
     end
-    append!(expr.args, e.args)
 end
 
-function generate!(
-    expr::Expr,
+function generate(
     ::Symbol,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
@@ -58,7 +56,7 @@ function generate!(
     args = (:(getvalue(list, $(Meta.quot(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
     condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
-    e = quote
+    quote
         $initialized_s = $condition_initialized
         $updated_s = if $initialized_s & $condition_updated
             node = getnode(list, $nodename_s)
@@ -68,11 +66,9 @@ function generate!(
             false
         end
     end
-    append!(expr.args, e.args)
 end
 
-function generate!(
-    expr::Expr,
+function generate(
     ::Symbol,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
@@ -83,33 +79,48 @@ function generate!(
     args = [:(getvalue(list, $(Meta.quot(n)))) for n in parentnames]
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
     condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
-    e = quote
+    quote
         $initialized_s = $condition_initialized
-        $updated_s = $initialized_s & $condition_updated & $(args[1])
+        $updated_s = $initialized_s & $condition_updated & $(args[2])
     end
-    append!(expr.args, e.args) # appending to the function body
 end
 
-function generate!(
-    expr::Expr,
+function generate(
     ::Symbol,
     name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
-    ::Type{<:Constant},
+    parentnames::Tuple{},
+    ::Type{<:AbstractConstant},
 )
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    e = quote
+    quote
         $initialized_s = true
         $updated_s = false
     end
-    append!(expr.args, e.args) # appending to the function body
+end
+
+function generate(
+    ::Symbol,
+    name::Symbol,
+    parentnames::Tuple{Symbol},
+    ::Type{<:Quiet},
+)
+    updated_s = Symbol(:updated, name)
+    initialized_s = Symbol(:initialized, name)
+    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
+    quote
+        $initialized_s = $condition_initialized
+        $updated_s = false
+    end
 end
 
 function getvalue(list::ListNode, name::Symbol)
     node = getnode(list, name)
     if getelement(node) isa Filter
-        _, node_name = getparentnames(node)
+        node_name, _ = getparentnames(node)
+        getvalue(list, node_name) # todo: avoid starting from the leaf
+    elseif getelement(node) isa Quiet
+        node_name = getparentnames(node)
         getvalue(list, node_name) # todo: avoid starting from the leaf
     else
         node |> getelement |> getvalue
