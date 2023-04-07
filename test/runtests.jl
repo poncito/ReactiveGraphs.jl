@@ -82,9 +82,9 @@ end
         @test c2 == [-3, -5]
     end
 
-    @testset "markov" begin
+    @testset "map - initialvalue" begin
         n1 = input(Int)
-        n2 = mapmarkov(+, 1, n1)
+        n2 = map(+, n1; initialvalue=1)
         c = sink(n2)
         s = Source(n1)
         s[] = 2
@@ -92,9 +92,9 @@ end
         @test c == [3, 6]
     end
 
-    @testset "stateful" begin
+    @testset "map - state" begin
         n1 = input(Int)
-        n2 = mapstateful((state, x)->(state+x, state-x), 1, n1)
+        n2 = map((state, x)->(state+x, state-x), n1; state=1)
         c = sink(n2)
         s = Source(n1)
         s[] = 2
@@ -103,9 +103,9 @@ end
         @test c == [3, 2, 0]
     end
 
-    @testset "markovstateful" begin
+    @testset "map - state and initialvalue" begin
         n1 = input(Int)
-        n2 = mapmarkovstateful((x, state, arg)->(state+x, arg), 1, 2, n1)
+        n2 = map((x, state, arg)->(state+x, arg), n1; initialvalue=1, state=2)
         c = sink(n2)
         s = Source(n1)
         # (x, state) == (1, 2)

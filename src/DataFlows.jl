@@ -3,7 +3,6 @@ module DataFlows
 export input
 export Source
 export constant
-export mapmarkov, mapstateful, mapmarkovstateful
 
 TypeOrValue{X} = Union{X,Type{X}}
 
@@ -22,43 +21,34 @@ function input(::Type{T}; name::Union{Nothing,Symbol}=nothing) where {T}
     Node(uniquename, op)
 end
 
-function Base.map(f::Function, args::Node...; name::Union{Nothing,Symbol}=nothing)
+function Base.map(f::Function, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
     uniquename = genname(name)
-    T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
-    op = Map{T}(Stateless(f), nothing)
-    Node(uniquename, op, args...)
-end
-
-function mapmarkov(f::Function, initialvalue::T, args::Node...; name::Union{Nothing,Symbol}=nothing) where {T}
-    uniquename = genname(name)
-    T2 = Base._return_type(f, Tuple{T, (getoperationtype(a) for a in args)...})
-    if T != T2
-        throw(ErrorException("type deduction error: expected $T got $T2"))
+    T, TState = typeof(initialvalue), typeof(state)
+    op = if isnothing(initialvalue) && isnothing(state)
+        T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
+         Map{T}(Stateless(f), nothing)
+    elseif isnothing(initialvalue) && !isnothing(state)
+        T, T2 = Base._return_type(f, Tuple{TState, (getoperationtype(a) for a in args)...}) |> _splittuple
+        if T2 != TState
+            throw(ErrorException("type deduction error: expected $TState got $T2"))
+        end
+        Map{T}(Stateful(f), state)
+    elseif !isnothing(initialvalue) && isnothing(state)
+        T2 = Base._return_type(f, Tuple{T, (getoperationtype(a) for a in args)...})
+        if T != T2
+            throw(ErrorException("type deduction error: expected $T got $T2"))
+        end
+        Map(Markov(f), nothing, initialvalue)
+    else
+        T1, T2 = Base._return_type(f, Tuple{T, TState, (getoperationtype(a) for a in args)...}) |> _splittuple
+        if T1 != T
+            throw(ErrorException("type deduction error: expected $T got $T1"))
+        end
+        if T2 != TState
+            throw(ErrorException("type deduction error: expected $TState got $T2"))
+        end
+        Map(MarkovStateful(f), state, initialvalue)
     end
-    op = Map(Markov(f), nothing, initialvalue)
-    Node(uniquename, op, args...)
-end
-
-function mapstateful(f::Function, state::TState, args::Node...; name::Union{Nothing,Symbol}=nothing) where {TState}
-    uniquename = genname(name)
-    T, T2 = Base._return_type(f, Tuple{TState, (getoperationtype(a) for a in args)...}) |> _splittuple
-    if T2 != TState
-        throw(ErrorException("type deduction error: expected $TState got $T2"))
-    end
-    op = Map{T}(Stateful(f), state)
-    Node(uniquename, op, args...)
-end
-
-function mapmarkovstateful(f::Function, initialvalue::T, state::TState, args::Node...; name::Union{Nothing,Symbol}=nothing) where {T, TState}
-    uniquename = genname(name)
-    T1, T2 = Base._return_type(f, Tuple{T, TState, (getoperationtype(a) for a in args)...}) |> _splittuple
-    if T1 != T
-        throw(ErrorException("type deduction error: expected $T got $T1"))
-    end
-    if T2 != TState
-        throw(ErrorException("type deduction error: expected $TState got $T2"))
-    end
-    op = Map(MarkovStateful(f), state, initialvalue)
     Node(uniquename, op, args...)
 end
 
