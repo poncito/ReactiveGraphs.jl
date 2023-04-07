@@ -2,7 +2,7 @@ using DataFlows
 using Test
 using BenchmarkTools
 
-import DataFlows: Graph
+import DataFlows: Graph, getoperationtype, Node
 
 function collectgraph(g::Graph)
     c = []
@@ -10,9 +10,9 @@ function collectgraph(g::Graph)
     c
 end
 
-sink(args...) = sink(identity, args...)
-function sink(f::Function, args...)
-    T = Base._return_type(f, Tuple{(eltype(a) for a in args)...})
+sink(arg::Node) = sink(identity, arg)
+function sink(f::Function, args::Node...)
+    T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
     v = Vector{T}()
     map(x::Vararg->push!(v, f(x...)), args...)
     v
@@ -113,6 +113,17 @@ end
         s[] = 4 # (x, state) == (6, 4)
         s[] = 5 # (x, state) == (10, 5)
         @test c == [3, 6, 10]
+    end
+
+    @testset "map!" begin
+        n1 = input(Int)
+        n2 = map!((x, arg)->(x[] += arg), Ref(1), n1)
+        n3 = map(x->x[], n2)
+        c = sink(n3)
+        s = Source(n1)
+        s[] = 2
+        s[] = 3
+        @test c == [3, 6]
     end
 end
 

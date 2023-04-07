@@ -21,26 +21,25 @@ function input(::Type{T}; name::Union{Nothing,Symbol}=nothing) where {T}
     Node(uniquename, op)
 end
 
-function Base.map(f::Function, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
-    uniquename = genname(name)
+function buildmap(f, argtypes, initialvalue, state)
     T, TState = typeof(initialvalue), typeof(state)
-    op = if isnothing(initialvalue) && isnothing(state)
-        T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
-         Map{T}(Stateless(f), nothing)
+    if isnothing(initialvalue) && isnothing(state)
+        T = Base._return_type(f, Tuple{argtypes...})
+        Map{T}(Stateless(f), nothing)
     elseif isnothing(initialvalue) && !isnothing(state)
-        T, T2 = Base._return_type(f, Tuple{TState, (getoperationtype(a) for a in args)...}) |> _splittuple
+        T, T2 = Base._return_type(f, Tuple{TState, argtypes...}) |> _splittuple
         if T2 != TState
             throw(ErrorException("type deduction error: expected $TState got $T2"))
         end
         Map{T}(Stateful(f), state)
     elseif !isnothing(initialvalue) && isnothing(state)
-        T2 = Base._return_type(f, Tuple{T, (getoperationtype(a) for a in args)...})
+        T2 = Base._return_type(f, Tuple{T, argtypes...})
         if T != T2
             throw(ErrorException("type deduction error: expected $T got $T2"))
         end
         Map(Markov(f), nothing, initialvalue)
     else
-        T1, T2 = Base._return_type(f, Tuple{T, TState, (getoperationtype(a) for a in args)...}) |> _splittuple
+        T1, T2 = Base._return_type(f, Tuple{T, TState, argtypes...}) |> _splittuple
         if T1 != T
             throw(ErrorException("type deduction error: expected $T got $T1"))
         end
@@ -49,12 +48,39 @@ function Base.map(f::Function, args::Node...; name::Union{Nothing,Symbol}=nothin
         end
         Map(MarkovStateful(f), state, initialvalue)
     end
-    Node(uniquename, op, args...)
+end
+
+function buildmap!(f, argtypes, initialvalue, state=nothing)
+    if !ismutable(initialvalue)
+        throw(ErrorException("initialvalue must be mutable, got $initialvalue"))
+    end
+    if isnothing(state)
+        Map(Markov!(f), nothing, initialvalue)
+    else
+        if !ismutable(state)
+            throw(ErrorException("state must be mutable, got $state"))
+        end
+        Map(MarkovStateful!(f), state, initialvalue)
+    end
+end
+
+function Base.map(f::Function, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
+    uniquename = genname(name)
+    argtypes = getoperationtype.((arg, args...))
+    op = buildmap(f, argtypes, initialvalue, state)
+    Node(uniquename, op, arg, args...)
+end
+
+function Base.map!(f::Function, initialvalue, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, state=nothing)
+    uniquename = genname(name)
+    argtypes = getoperationtype.((arg, args...))
+    op = buildmap!(f, argtypes, initialvalue, state)
+    Node(uniquename, op, arg, args...)
 end
 
 function Base.filter(condition::Node, x::Node; name::Union{Nothing,Symbol}=nothing)
     uniquename = genname(name)
-    op = Filter()
+    op = Filter{getoperationtype(x)}()
     Node(uniquename, op, condition, x)
 end
 

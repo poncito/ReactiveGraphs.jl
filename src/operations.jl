@@ -48,6 +48,16 @@ struct MarkovStateful{F<:Function}
 end
 MapMarkovStateful{T,TState} = Map{T,TState,<:MarkovStateful}
 
+struct Markov!{F<:Function}
+    f::F
+end
+MapMarkov!{T,TState} = Map{T,TState,<:Markov!}
+
+struct MarkovStateful!{F<:Function}
+    f::F
+end
+MapMarkovStateful!{T,TState} = Map{T,TState,<:MarkovStateful!}
+
 function update!(m::MapMarkovStateful, args...)
     m.x, m.state = m.f.f(m.x, m.state, args...)
 end
@@ -64,7 +74,10 @@ function update!(m::MapStateful, args...)
     m.x, m.state = m.f.f(m.state, args...)
 end
 
-struct Filter <: Operation{Nothing} end
+update!(m::MapMarkov!, args...) = m.f.f(m.x, args...)
+update!(m::MapMarkovStateful!, args...) = m.f.f(m.state, args...)
+
+struct Filter{T} <: Operation{T} end
 
 struct Constant{T} <: Operation{T}
     x::T
