@@ -4,6 +4,7 @@ export input
 export Source
 export constant
 export quiet
+export select
 
 TypeOrValue{X} = Union{X,Type{X}}
 
@@ -15,9 +16,10 @@ genname(::Nothing) = gensym()
 genname(s::Symbol) = gensym(s)
 getoperationtype(node::Node) = getnode(node) |> getelement |> eltype
 
-include("filter.jl")
-include("map.jl")
 include("input.jl")
+include("map.jl")
+include("filter.jl")
+include("selecter.jl")
 include("constant.jl")
 include("quiet.jl")
 

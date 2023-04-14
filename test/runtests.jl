@@ -158,6 +158,28 @@ end
     @test c == [3, 4]
 end
 
+@testset "selecter" begin
+    n1 = input(Int)
+    n2 = input(Bool)
+    n3 = select(n1, n2)
+    n4 = input(Int)
+    n5 = map(+, n3, n4)
+    c = sink(n5)
+    s1 = Source(n1)
+    s2 = Source(n2)
+    s4 = Source(n4)
+    s1[] = 1
+    s2[] = false
+    s4[] = 2
+    s2[] = true
+    s1[] = 3
+    s4[] = 4
+    s2[] = false
+    s1[] = 5
+    s4[] = 6
+    @test c == [3, 5, 7]
+end
+
 @testset "constant" begin
     n1 = input(Int)
     n2 = constant(1)
