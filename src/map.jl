@@ -56,7 +56,7 @@ function update!(m::MapStateful, args...)
 end
 
 update!(m::MapMarkov!, args...) = m.f.f(m.x, args...)
-update!(m::MapMarkovStateful!, args...) = m.f.f(m.state, args...)
+update!(m::MapMarkovStateful!, args...) = m.f.f(m.x, m.state, args...)
 
 function buildmap(f, argtypes, initialvalue, state)
     T, TState = typeof(initialvalue), typeof(state)
@@ -87,10 +87,16 @@ function buildmap(f, argtypes, initialvalue, state)
     end
 end
 
-function buildmap!(f, argtypes, initialvalue, state=nothing)
-    if !ismutable(initialvalue)
-        throw(ErrorException("initialvalue must be mutable, got $initialvalue"))
+function buildmap!(f, argtypes, initialvalue, state)
+    if isnothing(initialvalue) && isnothing(state)
+        throw(ErrorException("at least initialvalue or state must be different from nothing"))
     end
+
+    if !ismutable(initialvalue) && !isnothing(initialvalue)
+        # we can use nothing when the state contains the node value
+        throw(ErrorException("initialvalue must be mutable or nothing, got $initialvalue"))
+    end
+
     if isnothing(state)
         Map(Markov!(f), nothing, initialvalue)
     else
@@ -108,7 +114,7 @@ function Base.map(f::Function, arg::Node, args::Node...; name::Union{Nothing,Sym
     Node(uniquename, op, arg, args...)
 end
 
-function Base.map!(f::Function, initialvalue, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, state=nothing)
+function Base.map!(f::Function, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
     uniquename = genname(name)
     argtypes = getoperationtype.((arg, args...))
     op = buildmap!(f, argtypes, initialvalue, state)

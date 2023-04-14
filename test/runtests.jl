@@ -115,15 +115,29 @@ end
         @test c == [3, 6, 10]
     end
 
-    @testset "map!" begin
+    @testset "map! - no state" begin
         n1 = input(Int)
-        n2 = map!((x, arg)->(x[] += arg), Ref(1), n1)
+        n2 = map!((x, arg)->(x[] += arg), n1; initialvalue=Ref(1))
         n3 = map(x->x[], n2)
         c = sink(n3)
         s = Source(n1)
         s[] = 2
         s[] = 3
         @test c == [3, 6]
+    end
+
+    @testset "map! - state" begin
+        n1 = input(Int)
+        n2 = map!(n1; initialvalue = Ref(1), state=Ref(1)) do x, state, arg
+            state[] += arg
+            x[] += state[] + arg 
+        end
+        n3 = map(x->x[], n2)
+        c = sink(n3)
+        s = Source(n1)
+        s[] = 2
+        s[] = 3
+        @test c == [6, 15]
     end
 end
 
