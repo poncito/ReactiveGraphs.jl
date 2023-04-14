@@ -8,15 +8,14 @@ Computational graph, optimized for low latency.
 Dataflows architectures are particularly relevant for building programs that process multiple data
 sources asynchronously.
 
-## What is this 
-
 This module provides the components required to build a computational graph architecture.
-The emphasize is on latency.
-To achieve high performance, the graph is compiled to avoid dynamic dispatching of the operations.
+Its implementation optimizes the latency.
+To achieve high performance, the graph is compiled to avoid dynamic dispatching of the operations,
+and solves for the type of each node at construction time.
 
 ## Example
 
-### mapping
+### Mapping
 
 This example shows how to create a graph that contains two inputs, and a node that sums their value.
 ```julia
@@ -42,7 +41,7 @@ s3[] = 3 # prints 5
 Each time an input is updated, the data will flow down the graph, 
 updating all children nodes.
 
-### filtering
+### Filtering
 
 One can stop the flow of data using `Base.filter`.
 ```julia
