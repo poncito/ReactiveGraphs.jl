@@ -20,7 +20,6 @@ function input(::Type{T}; name::Union{Nothing,Symbol}=nothing) where {T}
 end
 
 getvalue(::ListNode, element::Input) = getvalue(element)
-getvalidity(::ListNode, ::Input) = true
 
 function generate(
     inputname::Symbol,
@@ -37,7 +36,7 @@ function generate(
         if $updated_s
             $(Expr(:call, :update!, :node, :x))
         end
-        $initialized_s = $(name == inputname ? :(getvalidity(node)) : :(isinitialized(node)))
+        $initialized_s = $(name == inputname ? true : :(isinitialized(node)))
     end
 end
 

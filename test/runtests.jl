@@ -117,7 +117,7 @@ end
 
     @testset "map! - no state" begin
         n1 = input(Int)
-        n2 = map!((x, arg)->(x[] += arg), n1; initialvalue=Ref(1))
+        n2 = map!((x, arg)->(x[] += arg), Ref(1), n1)
         n3 = map(x->x[], n2)
         c = sink(n3)
         s = Source(n1)
@@ -128,7 +128,7 @@ end
 
     @testset "map! - state" begin
         n1 = input(Int)
-        n2 = map!(n1; initialvalue = Ref(1), state=Ref(1)) do x, state, arg
+        n2 = map!(Ref(1), n1; state=Ref(1)) do x, state, arg
             state[] += arg
             x[] += state[] + arg 
         end
@@ -139,6 +139,18 @@ end
         s[] = 3
         @test c == [6, 15]
     end
+end
+
+@testset "inlinedmap" begin
+    n1 = input(Int)
+    n2 = input(Int)
+    n3 = inlinedmap(+,n1,n2)
+    c = sink(n3)
+    s1 = Source(n1)
+    s2 = Source(n2)
+    s1[] = 1
+    s2[] = 2
+    @test c == [3]
 end
 
 @testset "filter" begin
@@ -210,4 +222,15 @@ end
     s2[] = 4
     s1[] = 5
     @test c == [5, 9]
+end
+
+@testset "lag" begin
+    n1 = input(Int)
+    n2 = lag(2, n1)
+    c = sink(n2)
+    s1 = Source(n1)
+    for i = 1:10
+        s1[] = i
+    end
+    @test c == 1:8
 end

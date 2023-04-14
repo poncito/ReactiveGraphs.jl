@@ -88,21 +88,15 @@ function buildmap(f, argtypes, initialvalue, state)
 end
 
 function buildmap!(f, argtypes, initialvalue, state)
-    if isnothing(initialvalue) && isnothing(state)
-        throw(ErrorException("at least initialvalue or state must be different from nothing"))
-    end
-
-    if !ismutable(initialvalue) && !isnothing(initialvalue)
-        # we can use nothing when the state contains the node value
-        throw(ErrorException("initialvalue must be mutable or nothing, got $initialvalue"))
+    if !isnothing(state) && !ismutable(state)
+        if !ismutable(state)
+            throw(ErrorException("state must be mutable, got $state"))
+        end
     end
 
     if isnothing(state)
         Map(Markov!(f), nothing, initialvalue)
     else
-        if !ismutable(state)
-            throw(ErrorException("state must be mutable, got $state"))
-        end
         Map(MarkovStateful!(f), state, initialvalue)
     end
 end
@@ -114,7 +108,7 @@ function Base.map(f::Function, arg::Node, args::Node...; name::Union{Nothing,Sym
     Node(uniquename, op, arg, args...)
 end
 
-function Base.map!(f::Function, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
+function Base.map!(f::Function, initialvalue, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, state=nothing)
     uniquename = genname(name)
     argtypes = getoperationtype.((arg, args...))
     op = buildmap!(f, argtypes, initialvalue, state)
@@ -122,7 +116,6 @@ function Base.map!(f::Function, arg::Node, args::Node...; name::Union{Nothing,Sy
 end
 
 getvalue(::ListNode, element::Map) = getvalue(element)
-getvalidity(::ListNode, ::Map) = true
 
 function generate(
     ::Symbol,
@@ -137,13 +130,13 @@ function generate(
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
     condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
     quote
-        $initialized_s = $condition_initialized
-        $updated_s = if $initialized_s & $condition_updated
+        $updated_s = if $condition_initialized & $condition_updated
             node = getnode(list, $nodename_s)
             $(Expr(:call, :update!, :node, args...))
-            getvalidity(node)
+            true
         else
             false
         end
+        $initialized_s = $updated_s
     end
 end
