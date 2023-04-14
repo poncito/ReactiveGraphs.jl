@@ -10,8 +10,10 @@ end
 
 getname(::TypeOrValue{ListNode{name}}) where {name} = name
 getparentnames(::TypeOrValue{ListNode{name, parentnames}}) where {name, parentnames} = parentnames
+getelementtype(::TypeOrValue{ListNode{name, parentnames, X}}) where {name, parentnames, X} = X
 getelement(n::ListNode) = n.x
 getnext(n::ListNode) = n.next
+Base.eltype(x::TypeOrValue{<:ListNode}) = eltype(getelementtype(x))
 
 mutable struct Graph
     last::Ref{Union{Root,ListNode}}
@@ -66,6 +68,13 @@ struct Node{name}
     Node(name::Symbol, graph::Graph) = new{name}(graph)
 end
 
+function Base.show(io::IO, node::Node)
+    name = getname(node)
+    type = eltype(node)
+    print(io, "Node($name,$type)")
+end
+
+Base.eltype(node::Node) = node |> getnode |> eltype
 getname(::TypeOrValue{Node{name}}) where {name} = name
 getgraph(node::Node) = node.graph
 getnode(node::Node) = getnode(getgraph(node), getname(node))

@@ -59,6 +59,9 @@ end
         n1 = input(Int)
         n2 = input(Int)
         m = map((x,y)->x+y, n1, n2)
+        @test eltype(n1) == Int
+        @test eltype(n2) == Int
+        @test eltype(m) == Int
         c = sink(m)
         s1 = Source(n1)
         s2 = Source(n2)

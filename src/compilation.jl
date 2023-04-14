@@ -5,6 +5,11 @@ end
 
 Source(node::Node) = Source(getname(node), getgraph(node)[])
 
+function Base.show(io::IO, s::Source{inputname}) where {inputname}
+    type = eltype(s.list)
+    print(io, "Source($inputname, $type)")
+end
+
 @generated function Base.setindex!(src::Source{inputname,LN}, x) where {inputname,LN}
     expr = quote
         list = src.list
