@@ -34,8 +34,8 @@ end
     @test collectgraph(g1) == [1, 2, 3]
 end
 
-@testset "map" begin
-    @testset "map - 1 input" begin
+@testset "input" begin
+    @testset "1 input" begin
         n1 = input(Int)
         c = sink(x -> 2x, n1)
         s = Source(n1)
@@ -43,6 +43,18 @@ end
         @test c == [4]
     end
 
+    @testset "1 mutable input" begin
+        n1 = input(Ref(0))
+        c = sink(x -> 2x[], n1)
+        s = Source(n1)
+        s[] = x -> begin
+            x[] = 2
+        end
+        @test c == [4]
+    end
+end
+
+@testset "map" begin
     @testset "map - 2 inputs" begin
         n1 = input(Int)
         n2 = input(Int)

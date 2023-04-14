@@ -2,7 +2,7 @@ mutable struct Input{T} <: Operation{T}
     isinitialized::Bool
     x::T
     Input{T}() where {T} = new{T}(false)
-    Input(x::T) where {T} = new{T}(true, x)
+    Input(x::T) where {T} = new{T}(false, x)
 end
 
 getvalue(x::Input) = x.x
@@ -13,9 +13,20 @@ function update!(i::Input, x)
     i.x = x
 end
 
+function update!(i::Input, f!::Function)
+    i.isinitialized = true
+    f!(i.x)
+end
+
 function input(::Type{T}; name::Union{Nothing,Symbol} = nothing) where {T}
     uniquename = genname(name)
     op = Input{T}()
+    Node(uniquename, op)
+end
+
+function input(x::T; name::Union{Nothing,Symbol} = nothing) where {T}
+    uniquename = genname(name)
+    op = Input(x)
     Node(uniquename, op)
 end
 

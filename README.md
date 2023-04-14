@@ -9,8 +9,8 @@ Dataflows architectures are particularly relevant for building programs that pro
 sources asynchronously.
 
 This module provides the components required to build a computational graph architecture.
-Its implementation optimizes the latency.
-To achieve high performance, the graph is compiled to avoid dynamic dispatching of the operations,
+Its implementation optimizes latency first.
+To achieve high performance, the graph is compiled to allow for static dispatch of the *operations*,
 and solves for the type of each node at construction time.
 
 ## Example
