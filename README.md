@@ -5,10 +5,8 @@ Computational graph, optimized for low latency.
 ## When is it useful?
 > A dataflow program is a graph, where nodes represent operations and edges represent data paths. 
 
-Dataflows architectures are particularly interesting to build programs that process multiple data
+Dataflows architectures are particularly relevant for building programs that process multiple data
 sources asynchronously.
-
-talk about time series interpretation
 
 ## What is this 
 
@@ -56,7 +54,7 @@ The node `node_filtered` contains the value of `input_1`,
 but will only trigger when `input_2` is `true`.
 
 ### Selecting
-In the previous filtering example, the node `node_filtered` always contain the value of input_1,
+In the previous filtering example, the node `node_filtered` always contains the value of `input_1`,
 and can be used to compute another node.
 To disable any node that would consume it, one can use `select`.
 ```julia
