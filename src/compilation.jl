@@ -21,11 +21,11 @@ end
 generate!(::Expr, ::Type{Root}, ::Symbol) = nothing
 function generate!(
     expr::Expr,
-    ::Type{ListNode{name, parentnames, X, Next}},
+    ::Type{ListNode{name,parentnames,X,Next}},
     inputname::Symbol,
-) where {name, parentnames, X, Next}
-    generate!(expr, Next, inputname) 
-    e = generate(inputname, name, parentnames, X) 
+) where {name,parentnames,X,Next}
+    generate!(expr, Next, inputname)
+    e = generate(inputname, name, parentnames, X)
     append!(expr.args, e.args)
     expr
 end

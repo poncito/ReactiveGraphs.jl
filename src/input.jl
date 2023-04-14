@@ -13,7 +13,7 @@ function update!(i::Input, x)
     i.x = x
 end
 
-function input(::Type{T}; name::Union{Nothing,Symbol}=nothing) where {T}
+function input(::Type{T}; name::Union{Nothing,Symbol} = nothing) where {T}
     uniquename = genname(name)
     op = Input{T}()
     Node(uniquename, op)
@@ -21,17 +21,12 @@ end
 
 getvalue(::ListNode, element::Input) = getvalue(element)
 
-function generate(
-    inputname::Symbol,
-    name::Symbol,
-    ::NTuple{<:Any,Symbol},
-    ::Type{<:Input},
-)
+function generate(inputname::Symbol, name::Symbol, ::NTuple{<:Any,Symbol}, ::Type{<:Input})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     nodename_s = Meta.quot(name)
     quote
-        $updated_s = $(name == inputname) 
+        $updated_s = $(name == inputname)
         node = getnode(list, $nodename_s)
         if $updated_s
             $(Expr(:call, :update!, :node, :x))
@@ -39,4 +34,3 @@ function generate(
         $initialized_s = $(name == inputname ? true : :(isinitialized(node)))
     end
 end
-

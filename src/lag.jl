@@ -5,8 +5,7 @@ mutable struct Lag{T}
     initialized::Bool
 end
 
-Lag(::Type{T}, n::Integer) where {T} = Lag(
-    Vector{T}(undef, n+1), n, 1, false)
+Lag(::Type{T}, n::Integer) where {T} = Lag(Vector{T}(undef, n + 1), n, 1, false)
 
 function Base.push!(lag::Lag{T}, x::T) where {T}
     lag.x[lag.i] = x
@@ -24,7 +23,7 @@ function Base.getindex(lag::Lag)
     lag.x[lag.i]
 end
 
-function lag(n::Integer, node::Node; name::Union{Nothing,Symbol}=nothing)
+function lag(n::Integer, node::Node; name::Union{Nothing,Symbol} = nothing)
     T = getoperationtype(node)
     lagnode = map!(Lag(T, n), node) do x0, x
         push!(x0, x)
@@ -32,4 +31,3 @@ function lag(n::Integer, node::Node; name::Union{Nothing,Symbol}=nothing)
     lagnode_initialized = select(lagnode, inlinedmap(lag -> lag.initialized, lagnode))
     inlinedmap(lag -> lag[], lagnode_initialized; name)
 end
-

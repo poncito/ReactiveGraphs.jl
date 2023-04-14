@@ -31,4 +31,3 @@ _splittuple(T::Type{<:Any}) = T, Nothing
 _splittuple(::Type{Tuple{T1,T2}}) where {T1,T2} = T1, T2
 
 end # module
-

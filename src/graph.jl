@@ -1,16 +1,22 @@
 struct Root end
 
-struct ListNode{name, parentnames, X, Next}
+struct ListNode{name,parentnames,X,Next}
     x::X
     next::Next
-    function ListNode(name::Symbol, parentnames::NTuple{<:Any,Symbol}, x, next::Union{Root,ListNode})
+    function ListNode(
+        name::Symbol,
+        parentnames::NTuple{<:Any,Symbol},
+        x,
+        next::Union{Root,ListNode},
+    )
         new{name,parentnames,typeof(x),typeof(next)}(x, next)
     end
 end
 
 getname(::TypeOrValue{ListNode{name}}) where {name} = name
-getparentnames(::TypeOrValue{ListNode{name, parentnames}}) where {name, parentnames} = parentnames
-getelementtype(::TypeOrValue{ListNode{name, parentnames, X}}) where {name, parentnames, X} = X
+getparentnames(::TypeOrValue{ListNode{name,parentnames}}) where {name,parentnames} =
+    parentnames
+getelementtype(::TypeOrValue{ListNode{name,parentnames,X}}) where {name,parentnames,X} = X
 getelement(n::ListNode) = n.x
 getnext(n::ListNode) = n.next
 Base.eltype(x::TypeOrValue{<:ListNode}) = eltype(getelementtype(x))

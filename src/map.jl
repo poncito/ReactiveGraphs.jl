@@ -2,8 +2,8 @@ mutable struct Map{T,TState,F} <: Operation{T}
     f::F
     state::TState
     x::T
-    Map{T}(f::F, state::TState) where {T, TState, F} = new{T,TState,F}(f, state)
-    Map(f::F, state::TState, x::T) where {T, TState, F} = new{T,TState,F}(f, state, x)
+    Map{T}(f::F, state::TState) where {T,TState,F} = new{T,TState,F}(f, state)
+    Map(f::F, state::TState, x::T) where {T,TState,F} = new{T,TState,F}(f, state, x)
 end
 getvalue(x::Map) = x.x
 getstate(x::Map) = x.state
@@ -64,19 +64,19 @@ function buildmap(f, argtypes, initialvalue, state)
         T = Base._return_type(f, Tuple{argtypes...})
         Map{T}(Stateless(f), nothing)
     elseif isnothing(initialvalue) && !isnothing(state)
-        T, T2 = Base._return_type(f, Tuple{TState, argtypes...}) |> _splittuple
+        T, T2 = Base._return_type(f, Tuple{TState,argtypes...}) |> _splittuple
         if T2 != TState
             throw(ErrorException("type deduction error: expected $TState got $T2"))
         end
         Map{T}(Stateful(f), state)
     elseif !isnothing(initialvalue) && isnothing(state)
-        T2 = Base._return_type(f, Tuple{T, argtypes...})
+        T2 = Base._return_type(f, Tuple{T,argtypes...})
         if T != T2
             throw(ErrorException("type deduction error: expected $T got $T2"))
         end
         Map(Markov(f), nothing, initialvalue)
     else
-        T1, T2 = Base._return_type(f, Tuple{T, TState, argtypes...}) |> _splittuple
+        T1, T2 = Base._return_type(f, Tuple{T,TState,argtypes...}) |> _splittuple
         if T1 != T
             throw(ErrorException("type deduction error: expected $T got $T1"))
         end
@@ -101,14 +101,28 @@ function buildmap!(f, argtypes, initialvalue, state)
     end
 end
 
-function Base.map(f::Function, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, initialvalue=nothing, state=nothing)
+function Base.map(
+    f::Function,
+    arg::Node,
+    args::Node...;
+    name::Union{Nothing,Symbol} = nothing,
+    initialvalue = nothing,
+    state = nothing,
+)
     uniquename = genname(name)
     argtypes = getoperationtype.((arg, args...))
     op = buildmap(f, argtypes, initialvalue, state)
     Node(uniquename, op, arg, args...)
 end
 
-function Base.map!(f::Function, initialvalue, arg::Node, args::Node...; name::Union{Nothing,Symbol}=nothing, state=nothing)
+function Base.map!(
+    f::Function,
+    initialvalue,
+    arg::Node,
+    args::Node...;
+    name::Union{Nothing,Symbol} = nothing,
+    state = nothing,
+)
     uniquename = genname(name)
     argtypes = getoperationtype.((arg, args...))
     op = buildmap!(f, argtypes, initialvalue, state)
@@ -117,18 +131,14 @@ end
 
 getvalue(::ListNode, element::Map) = getvalue(element)
 
-function generate(
-    ::Symbol,
-    name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
-    ::Type{<:Map},
-)
+function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Map})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     nodename_s = Meta.quot(name)
     args = (:(getvalue(list, $(Meta.quot(n)))) for n in parentnames)
-    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n  in parentnames)...)
-    condition_initialized = Expr(:call, :&, (Symbol(:initialized, n) for n  in parentnames)...)
+    condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
+    condition_initialized =
+        Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
     quote
         $updated_s = if $condition_initialized & $condition_updated
             node = getnode(list, $nodename_s)

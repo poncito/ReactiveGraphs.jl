@@ -6,7 +6,7 @@ import DataFlows: Graph, getoperationtype, Node
 
 function collectgraph(g::Graph)
     c = []
-    map((_,_,x)->push!(c, x), g)
+    map((_, _, x) -> push!(c, x), g)
     c
 end
 
@@ -14,13 +14,13 @@ sink(arg::Node) = sink(identity, arg)
 function sink(f::Function, args::Node...)
     T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
     v = Vector{T}()
-    map(x::Vararg->push!(v, f(x...)), args...)
+    map(x::Vararg -> push!(v, f(x...)), args...)
     v
 end
 
 @testset "graph" begin
     g1 = Graph()
-    @test g1 == merge!(g1) 
+    @test g1 == merge!(g1)
 
     push!(g1, :a, (), 1)
     push!(g1, :b, (), 2)
@@ -37,7 +37,7 @@ end
 @testset "map" begin
     @testset "map - 1 input" begin
         n1 = input(Int)
-        c = sink(x->2x, n1)
+        c = sink(x -> 2x, n1)
         s = Source(n1)
         s[] = 2
         @test c == [4]
@@ -58,14 +58,14 @@ end
     @testset "map - 2 inputs, 2 maps sequential" begin
         n1 = input(Int)
         n2 = input(Int)
-        m = map((x,y)->x+y, n1, n2)
+        m = map((x, y) -> x + y, n1, n2)
         @test eltype(n1) == Int
         @test eltype(n2) == Int
         @test eltype(m) == Int
         c = sink(m)
         s1 = Source(n1)
         s2 = Source(n2)
-        s1[] = 1 
+        s1[] = 1
         s2[] = 2
         s1[] = 3
         @test c == [3, 5]
@@ -75,7 +75,7 @@ end
         n1 = input(Int)
         n2 = input(Int)
         c1 = sink(+, n1, n2)
-        c2 = sink((x,y) -> -(x+y), n1, n2)
+        c2 = sink((x, y) -> -(x + y), n1, n2)
         s1 = Source(n1)
         s2 = Source(n2)
         s1[] = 1
@@ -87,7 +87,7 @@ end
 
     @testset "map - initialvalue" begin
         n1 = input(Int)
-        n2 = map(+, n1; initialvalue=1)
+        n2 = map(+, n1; initialvalue = 1)
         c = sink(n2)
         s = Source(n1)
         s[] = 2
@@ -97,7 +97,7 @@ end
 
     @testset "map - state" begin
         n1 = input(Int)
-        n2 = map((state, x)->(state+x, state-x), n1; state=1)
+        n2 = map((state, x) -> (state + x, state - x), n1; state = 1)
         c = sink(n2)
         s = Source(n1)
         s[] = 2
@@ -108,7 +108,7 @@ end
 
     @testset "map - state and initialvalue" begin
         n1 = input(Int)
-        n2 = map((x, state, arg)->(state+x, arg), n1; initialvalue=1, state=2)
+        n2 = map((x, state, arg) -> (state + x, arg), n1; initialvalue = 1, state = 2)
         c = sink(n2)
         s = Source(n1)
         # (x, state) == (1, 2)
@@ -120,8 +120,8 @@ end
 
     @testset "map! - no state" begin
         n1 = input(Int)
-        n2 = map!((x, arg)->(x[] += arg), Ref(1), n1)
-        n3 = map(x->x[], n2)
+        n2 = map!((x, arg) -> (x[] += arg), Ref(1), n1)
+        n3 = map(x -> x[], n2)
         c = sink(n3)
         s = Source(n1)
         s[] = 2
@@ -131,11 +131,11 @@ end
 
     @testset "map! - state" begin
         n1 = input(Int)
-        n2 = map!(Ref(1), n1; state=Ref(1)) do x, state, arg
+        n2 = map!(Ref(1), n1; state = Ref(1)) do x, state, arg
             state[] += arg
-            x[] += state[] + arg 
+            x[] += state[] + arg
         end
-        n3 = map(x->x[], n2)
+        n3 = map(x -> x[], n2)
         c = sink(n3)
         s = Source(n1)
         s[] = 2
@@ -147,7 +147,7 @@ end
 @testset "inlinedmap" begin
     n1 = input(Int)
     n2 = input(Int)
-    n3 = inlinedmap(+,n1,n2)
+    n3 = inlinedmap(+, n1, n2)
     c = sink(n3)
     s1 = Source(n1)
     s2 = Source(n2)
@@ -166,7 +166,7 @@ end
     s1[] = 2
     s2[] = false
     s1[] = 3
-    s2[] = true 
+    s2[] = true
     s1[] = 4
     s2[] = false
     s1[] = 5

@@ -9,13 +9,13 @@ struct Constant{T} <: AbstractConstant{T}
 end
 getvalue(c::Constant) = c.x
 
-function constant(x; name::Union{Nothing,Symbol}=nothing)
+function constant(x; name::Union{Nothing,Symbol} = nothing)
     uniquename = genname(name)
     op = Constant(x)
     Node(uniquename, op)
 end
 
-function constant(x::Bool; name::Union{Nothing,Symbol}=nothing)
+function constant(x::Bool; name::Union{Nothing,Symbol} = nothing)
     uniquename = genname(name)
     op = TypeConstant(x)
     Node(uniquename, op)
@@ -23,12 +23,7 @@ end
 
 getvalue(::ListNode, element::AbstractConstant) = getvalue(element)
 
-function generate(
-    ::Symbol,
-    name::Symbol,
-    parentnames::Tuple{},
-    ::Type{<:AbstractConstant},
-)
+function generate(::Symbol, name::Symbol, parentnames::Tuple{}, ::Type{<:AbstractConstant})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     quote
@@ -36,4 +31,3 @@ function generate(
         $updated_s = false
     end
 end
-
