@@ -25,9 +25,8 @@ function generate!(
     expr
 end
 
-function getvalue(list::ListNode, name::Symbol)
-    node = getnode(list, name)
-    getvalue(node, getelement(node)) 
-end
+getvalue(list::ListNode, name::Symbol) = getnode(list, name) |> getvalue
+getvalue(node::ListNode) = getvalue(node, getelement(node))
 
-
+getvalidity(list::ListNode, name::Symbol) = getnode(list, name) |> getvalidity
+getvalidity(node::ListNode) = getvalidity(node, getelement(node))

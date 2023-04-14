@@ -122,6 +122,7 @@ function Base.map!(f::Function, arg::Node, args::Node...; name::Union{Nothing,Sy
 end
 
 getvalue(::ListNode, element::Map) = getvalue(element)
+getvalidity(::ListNode, ::Map) = true
 
 function generate(
     ::Symbol,
@@ -140,7 +141,7 @@ function generate(
         $updated_s = if $initialized_s & $condition_updated
             node = getnode(list, $nodename_s)
             $(Expr(:call, :update!, :node, args...))
-            true
+            getvalidity(node)
         else
             false
         end
