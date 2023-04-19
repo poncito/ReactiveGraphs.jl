@@ -140,20 +140,33 @@ end
 end
 
 @testset "filter" begin
-    n1 = input(Int)
-    n2 = input(Bool)
-    n3 = filter(n1, n2)
-    c = sink(n3)
-    s1 = Source(n1)
-    s2 = Source(n2)
-    s1[] = 2
-    s2[] = false
-    s1[] = 3
-    s2[] = true
-    s1[] = 4
-    s2[] = false
-    s1[] = 5
-    @test c == [3, 4]
+    @testset "filter - node" begin
+        n1 = input(Int)
+        n2 = input(Bool)
+        n3 = filter(n1, n2)
+        c = sink(n3)
+        s1 = Source(n1)
+        s2 = Source(n2)
+        s1[] = 2
+        s2[] = false
+        s1[] = 3
+        s2[] = true
+        s1[] = 4
+        s2[] = false
+        s1[] = 5
+        @test c == [3, 4]
+    end
+
+    @testset "filter - function" begin
+        n1 = input(Int)
+        n2 = filter(iseven, n1)
+        c = sink(n2)
+        s1 = Source(n1)
+        for i=1:4
+            s1[] = i
+        end
+        @test c == [2, 4]
+    end
 end
 
 @testset "selecter" begin
