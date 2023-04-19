@@ -8,7 +8,13 @@ export quiet
 export select
 export lag
 
-TypeOrValue{X} = Union{X,Type{X}}
+TypeOrValue{X} = Union{X,Type{<:X}}
+
+struct TypeSymbol{x}
+    TypeSymbol(x::Symbol) = new{x}()
+end
+
+getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
 
 include("graph.jl")
 include("operations.jl")

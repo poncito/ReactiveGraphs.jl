@@ -35,13 +35,13 @@ getvalue(::ListNode, element::Input) = getvalue(element)
 function generate(inputname::Symbol, name::Symbol, ::NTuple{<:Any,Symbol}, ::Type{<:Input})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    nodename_s = Meta.quot(name)
-    quote
-        $updated_s = $(name == inputname)
-        node = getnode(list, $nodename_s)
-        if $updated_s
-            $(Expr(:call, :update!, :node, :x))
-        end
-        $initialized_s = $(name == inputname ? true : :(isinitialized(node)))
+    nodename_s = Symbol(:node, name)
+    expr = Expr(:quote)
+    push!(expr.args, :($updated_s = $(name == inputname)))
+    push!(expr.args, :($nodename_s = getnode(list, $(TypeSymbol(name)))))
+    if name == inputname
+        push!(expr.args, :($(Expr(:call, :update!, nodename_s, :x))))
     end
+    push!(expr.args, :($initialized_s = $(name == inputname ? true : :(isinitialized($nodename_s)))))
+    expr
 end

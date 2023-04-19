@@ -2,23 +2,23 @@ using Revise
 using DataFlows
 using BenchmarkTools
 
-n1 = input(Float64)
-n2 = input(Float64)
-n3 = map((x, y) -> x + y, n1, n2)
-s1 = Source(n1)
-s2 = Source(n2)
-a1 = 1.0
-a2 = 2.0
-s1[] = a1
+i1 = input(Int)
+i2 = input(Bool)
+i3 = input(Bool)
+i1f = filter(i1, i2)
+i1s = select(i1, i3)
+n2 = map(x->x+1, i1f)
+n3 = foldl((state, x)-> state + x, 1, i1s)
+n4 = inlinedmap(+,n2,n3)
+n5 = lag(1, n4)
 
-function ftest(a1, a2)
-    if isnan(a1) | isnan(a2)
-        NaN
-    else
-        a1 + a2
-    end
-end
+s1 = Source(i1)
+s2 = Source(i2)
+s3 = Source(i3)
+s1[] = 1
+s2[] = true
+s3[] = true
+v = 1
+@benchmark setindex!($s1, $v)
 
-# @info DataFlows.generate!(quote end, typeof(n1.graph[]), DataFlows.getname(n1))
-@benchmark setindex!($s2, $a2)
-@benchmark ftest($a1, $a2)
+# DataFlows.debugsource(s1)

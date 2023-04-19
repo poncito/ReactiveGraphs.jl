@@ -15,6 +15,7 @@ end
         list = src.list
     end
     generate!(expr, LN, inputname)
+    push!(expr.args, nothing)
     expr
 end
 
@@ -30,5 +31,10 @@ function generate!(
     expr
 end
 
-getvalue(list::ListNode, name::Symbol) = getnode(list, name) |> getvalue
+# getvalue(list::ListNode, name::Symbol) = getnode(list, name) |> getvalue
+getvalue(list::ListNode, v::TypeSymbol) = getnode(list, v) |> getvalue
 getvalue(node::ListNode) = getvalue(node, getelement(node))
+
+function debugsource(src::Source{inputname,LN}) where {inputname,LN}
+    generate!(Expr(:block), LN, inputname)
+end
