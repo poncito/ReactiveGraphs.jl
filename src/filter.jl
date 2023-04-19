@@ -11,6 +11,14 @@ function Base.filter(x::Node, condition::Node; name::Union{Nothing,Symbol} = not
     Node(uniquename, op, x, condition)
 end
 
+function Base.filter(f::Function, x::Node; name::Union{Nothing,Symbol} = nothing)
+    condition = map(f, x; name)
+    if eltype(condition) != Bool
+        throw(ErrorException("condition is not a boolean"))
+    end
+    filter(x, condition; name)
+end
+
 function generate(
     ::Symbol,
     name::Symbol,
