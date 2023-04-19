@@ -23,15 +23,15 @@ end
 function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Foldl})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    nodename_s = Meta.quot(name)
-    args = (:(getvalue(list, $(Meta.quot(n)))) for n in parentnames)
+    args = (:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
     Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
+    nodename_s = Symbol(:node, name)
     quote
         $updated_s = if $condition_initialized & $condition_updated
-            node = getnode(list, $nodename_s)
-            $(Expr(:call, :update!, :node, args...))
+            $nodename_s = getnode(list, $(TypeSymbol(name)))
+            $(Expr(:call, :update!, nodename_s, args...))
             true
         else
             false

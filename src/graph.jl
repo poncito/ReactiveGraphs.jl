@@ -58,14 +58,13 @@ function Base.merge!(graph1::Graph, graph2::Graph, graphs...)
     merge!(graph1, graphs...)
 end
 
-# the error should be arise at the highest level of the recursion
-getnode(graph::Graph, name::Symbol) = getnode(graph[], name)
-getnode(::Root, name::Symbol) = throw(ErrorException("symbol $(name) not found in graph"))
-function getnode(x::ListNode, name::Symbol)
-    if getname(x) == name
+getnode(graph::Graph, s::TypeSymbol) = getnode(graph[], s)
+getnode(::Root, s::TypeSymbol) = throw(ErrorException("symbol $(getsymbol(s)) not found in graph"))
+function getnode(x::ListNode, v::TypeSymbol)
+    if getname(x) == getsymbol(v)
         x
     else
-        getnode(x.next, name)
+        getnode(x.next, v)
     end
 end
 
@@ -89,7 +88,7 @@ end
 Base.eltype(node::Node) = node |> getnode |> eltype
 getname(::TypeOrValue{Node{name}}) where {name} = name
 getgraph(node::Node) = node.graph
-getnode(node::Node) = getnode(getgraph(node), getname(node))
+getnode(node::Node) = getnode(getgraph(node), TypeSymbol(getname(node)))
 
 function Node(name::Symbol, x::X, parents::Node...) where {X}
     graph = if isempty(parents)

@@ -1,8 +1,9 @@
 struct Selecter{T} <: Operation{T} end
 
+# todo: refacto to avoid relying on the propagation
 function getvalue(node::ListNode, ::Selecter)
     node_name, _ = getparentnames(node)
-    getvalue(node, node_name) # todo: avoid starting from the leaf
+    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
 end
 
 function select(x::Node, condition::Node; name::Union{Nothing,Symbol} = nothing)
@@ -19,7 +20,7 @@ function generate(
 )
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    args = [:(getvalue(list, $(Meta.quot(n)))) for n in parentnames]
+    args = [:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames]
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
