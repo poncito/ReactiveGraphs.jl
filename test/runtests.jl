@@ -14,7 +14,10 @@ sink(arg::Node) = sink(identity, arg)
 function sink(f::Function, args::Node...)
     T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
     v = Vector{T}()
-    map(x::Vararg -> push!(v, f(x...)), args...)
+    map(args...) do x::Vararg
+        push!(v, f(x...))
+        nothing
+    end
     v
 end
 
@@ -96,10 +99,12 @@ end
         @test c1 == [3, 5]
         @test c2 == [-3, -5]
     end
+end
 
-    @testset "map - initialvalue" begin
+@testset "foldl" begin
+    @testset "foldl immutable" begin
         n1 = input(Int)
-        n2 = map(+, n1; initialvalue = 1)
+        n2 = foldl(+, 1, n1)
         c = sink(n2)
         s = Source(n1)
         s[] = 2
@@ -107,52 +112,18 @@ end
         @test c == [3, 6]
     end
 
-    @testset "map - state" begin
+    @testset "fold mutable" begin
         n1 = input(Int)
-        n2 = map((state, x) -> (state + x, state - x), n1; state = 1)
-        c = sink(n2)
-        s = Source(n1)
-        s[] = 2
-        s[] = 3
-        s[] = 4
-        @test c == [3, 2, 0]
-    end
-
-    @testset "map - state and initialvalue" begin
-        n1 = input(Int)
-        n2 = map((x, state, arg) -> (state + x, arg), n1; initialvalue = 1, state = 2)
-        c = sink(n2)
-        s = Source(n1)
-        # (x, state) == (1, 2)
-        s[] = 3 # (x, state) == (3, 3) 
-        s[] = 4 # (x, state) == (6, 4)
-        s[] = 5 # (x, state) == (10, 5)
-        @test c == [3, 6, 10]
-    end
-
-    @testset "map! - no state" begin
-        n1 = input(Int)
-        n2 = map!((x, arg) -> (x[] += arg), Ref(1), n1)
-        n3 = map(x -> x[], n2)
-        c = sink(n3)
-        s = Source(n1)
-        s[] = 2
-        s[] = 3
-        @test c == [3, 6]
-    end
-
-    @testset "map! - state" begin
-        n1 = input(Int)
-        n2 = map!(Ref(1), n1; state = Ref(1)) do x, state, arg
-            state[] += arg
-            x[] += state[] + arg
+        n2 = foldl(Ref(1), n1) do state, x
+            state[] += x
+            state
         end
         n3 = map(x -> x[], n2)
         c = sink(n3)
         s = Source(n1)
         s[] = 2
         s[] = 3
-        @test c == [6, 15]
+        @test c == [3, 6]
     end
 end
 

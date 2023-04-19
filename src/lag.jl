@@ -25,8 +25,9 @@ end
 
 function lag(n::Integer, node::Node; name::Union{Nothing,Symbol} = nothing)
     T = getoperationtype(node)
-    lagnode = map!(Lag(T, n), node) do x0, x
-        push!(x0, x)
+    lagnode = foldl(Lag(T, n), node) do state, x
+        push!(state, x)
+        state
     end
     lagnode_initialized = select(lagnode, inlinedmap(lag -> lag.initialized, lagnode))
     inlinedmap(lag -> lag[], lagnode_initialized; name)

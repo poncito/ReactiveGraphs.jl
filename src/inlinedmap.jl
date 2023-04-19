@@ -35,8 +35,6 @@ function generate(
 )
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    nodename_s = Meta.quot(name)
-    args = (:(getvalue(list, $(Meta.quot(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)

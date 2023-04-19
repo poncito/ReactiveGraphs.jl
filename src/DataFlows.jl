@@ -20,6 +20,7 @@ getoperationtype(node::Node) = getnode(node) |> getelement |> eltype
 
 include("input.jl")
 include("map.jl")
+include("foldl.jl")
 include("inlinedmap.jl")
 include("filter.jl")
 include("selecter.jl")
