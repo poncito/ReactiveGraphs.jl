@@ -120,7 +120,15 @@ The user should also read the documentation of
 - constant
 - lag (to build nodes that contain previous values)
 
+## API
+```@docs
+input
+Source
+Base.map(::Function,::DataFlows.Node,::Vararg{DataFlows.Node})
+```
+
 ## Comparison with Observables.jl
+Observables provides a nice API 
 
 ## Benchmark 
 ```julia

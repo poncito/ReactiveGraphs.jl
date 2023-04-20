@@ -19,7 +19,7 @@ function update!(i::Input, f!::Function)
 end
 
 
-"""julia
+"""
     input(::Type{T}; name)
 
 Creates a node that will contain a element of type `T`.
@@ -42,7 +42,7 @@ function input(::Type{T}; name = nothing) where {T}
     Node(uniquename, op)
 end
 
-"""julia
+"""
     input(x; name)
 
 Creates a node that contains `x`.

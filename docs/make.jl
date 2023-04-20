@@ -1,4 +1,4 @@
 using Documenter
 using DataFlows
 
-makedocs(sitename="DataFlows.jl")
+makedocs(sitename="DataFlows.jl", modules=[DataFlows])

@@ -12,7 +12,7 @@ end
     nothing
 end
 
-"""julia
+"""
     map(f, arg::Node, args::Node...; name)
 
 Creates a node whose value is given by
@@ -25,7 +25,7 @@ function Base.map(
     f::Function,
     arg::Node,
     args::Node...;
-    name::Union{Nothing,Symbol} = nothing,
+    name = nothing,
 )
     uniquename = genname(name)
     argtypes = getoperationtype.((arg, args...))

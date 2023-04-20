@@ -4,7 +4,7 @@ struct Selecter{T} <: Operation{T} end
     select(x::Node, condition::Node; name)
 
 Bulds a node that contains the same value as node `x`,
-but that disables the updates of any node that depends on `x` when
+but that prevents updating its children when
 the value of `condition` is `false`.
 
 If `name` is provided, it will be appended to the

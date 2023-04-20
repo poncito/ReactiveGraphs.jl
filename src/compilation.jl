@@ -7,12 +7,12 @@ end
 """
     Source(::Node)
 
-Transforms an `Input` into a `Source`, which is a type stable version of the former.
+Transforms an input node into a `Source`, which is a type stable version of the former.
 This type is used to `push!` values into the computational graph.
 The input objects are not used directly, for performance considerations.
 
 ```julia
->julia i = input(String)
+julia> i = input(String)
        m = map(println, i)
        s = Source(i)
        push!(s, "example")

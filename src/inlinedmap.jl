@@ -6,7 +6,7 @@ InlinedMap(::Type{T}, f::F) where {T,F} = InlinedMap{T,F}(f)
 
 # todo: can we have an inlinedmap with no argument?
 # if so, could we remove the constants?
-"""julia
+"""
     inlinedmap(f, arg::Node, args::Node...; name)
 
 Similarly to `map`, creates a node whose value is given by
