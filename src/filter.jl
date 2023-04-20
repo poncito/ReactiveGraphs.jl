@@ -1,14 +1,24 @@
 struct Filter{T} <: Operation{T} end
 
-function getvalue(node::ListNode, ::Filter)
-    node_name, _ = getparentnames(node)
-    getvalue(node, node_name) # todo: avoid starting from the leaf
-end
+"""
+    filter(x::Node, condition::Node; name)
 
-function Base.filter(x::Node, condition::Node; name::Union{Nothing,Symbol} = nothing)
+Bulds a node that contains the same value as node `x`,
+but that only forwards an update when the value of node `condition` 
+is true.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
+function Base.filter(x::Node, condition::Node; name = nothing)
     uniquename = genname(name)
     op = Filter{getoperationtype(x)}()
     Node(uniquename, op, x, condition)
+end
+
+function getvalue(node::ListNode, ::Filter)
+    node_name, _ = getparentnames(node)
+    getvalue(node, node_name) # todo: avoid starting from the leaf
 end
 
 function generate(

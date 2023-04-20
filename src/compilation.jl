@@ -1,8 +1,24 @@
+# todo: ensure that the node exists, and is an input
 struct Source{inputname,LN<:ListNode}
     list::LN
     Source(inputname::Symbol, list::LN) where {LN<:ListNode} = new{inputname,LN}(list)
 end
 
+"""
+    Source(::Node)
+
+Transforms an `Input` into a `Source`, which is a type stable version of the former.
+This type is used to `push!` values into the computational graph.
+The input objects are not used directly, for performance considerations.
+
+```julia
+>julia i = input(String)
+       m = map(println, i)
+       s = Source(i)
+       push!(s, "example")
+example
+```
+"""
 Source(node::Node) = Source(getname(node), getgraph(node)[])
 
 function Base.show(io::IO, s::Source{inputname}) where {inputname}

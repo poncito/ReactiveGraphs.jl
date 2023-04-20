@@ -9,15 +9,24 @@ struct Constant{T} <: AbstractConstant{T}
 end
 getvalue(c::Constant) = c.x
 
-function constant(x; name::Union{Nothing,Symbol} = nothing)
-    uniquename = genname(name)
-    op = Constant(x)
-    Node(uniquename, op)
-end
+"""
+    constant(x; name)
 
-function constant(x::Bool; name::Union{Nothing,Symbol} = nothing)
+Bulds a node that contains the constant value x,
+and that does not propagate directly.
+If `x` is a `Bool`, then the constant value will be propagated
+by Julia's compiler.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
+function constant(x; name = nothing)
     uniquename = genname(name)
-    op = TypeConstant(x)
+    op = if x isa Bool
+        TypeConstant(x)
+    else
+        Constant(x)
+    end
     Node(uniquename, op)
 end
 

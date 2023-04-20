@@ -69,6 +69,12 @@ function getnode(x::ListNode, name::Symbol)
     end
 end
 
+"""
+    Node{name}
+
+Objects of type `Node` correspond to the nodes of the computational graph.
+Each node is identified by a uniquely generated name `name`.
+"""
 struct Node{name}
     graph::Graph
     Node(name::Symbol, graph::Graph) = new{name}(graph)
