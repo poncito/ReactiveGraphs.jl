@@ -18,12 +18,48 @@ function update!(i::Input, f!::Function)
     f!(i.x)
 end
 
-function input(::Type{T}; name::Union{Nothing,Symbol} = nothing) where {T}
+
+"""julia
+    input(::Type{T}; name)
+
+Creates a node that will contain a element of type `T`.
+To push a value in the node, one need to wrap it in a `Source`,
+and call `push!`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+
+Example:
+```julia
+julia> i = input(Int)
+       s = Source(i)
+       push!(s, 1)
+```
+"""
+function input(::Type{T}; name = nothing) where {T}
     uniquename = genname(name)
     op = Input{T}()
     Node(uniquename, op)
 end
 
+"""julia
+    input(x; name)
+
+Creates a node that contains `x`.
+This should be used when `x` is mutable.
+To push a value in the node, one need to wrap it in a `Source`,
+and call `push!`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+
+Example:
+```julia
+julia> i = input(Ref(0))
+       s = Source(i)
+       push!(x->x[] = 1, s)
+```
+"""
 function input(x::T; name::Union{Nothing,Symbol} = nothing) where {T}
     uniquename = genname(name)
     op = Input(x)

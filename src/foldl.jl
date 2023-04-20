@@ -6,16 +6,32 @@ end
 @inline getvalue(::ListNode, element::Foldl) = getvalue(element)
 
 @inline function update!(m::Foldl, args...)
-    @inline m.state = m.f(m.state, args...)
+    @inline state = m.f(m.state, args...)
+    if typeof(state) != typeof(m.state)
+        throw(E)
+    end
+    m.state = state
     nothing
 end
 
+# todo: can we have an linedmap with no argument?
+# if so, could we remove the constants?
+"""julia
+    foldl(f, state, arg::Node, args::Node...; name)
+
+Creates a node that contains a state initialized by `state`.
+When any of the arguments are updated, the state is updated by calling
+`state_updated = f(state, arg, args...)`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
 function Base.foldl(
     f::Function,
     state::TState,
     arg::Node,
     args::Node...;
-    name::Union{Nothing,Symbol} = nothing,
+    name = nothing,
 ) where {TState}
     Node(genname(name), Foldl(f, state), arg, args...)
 end

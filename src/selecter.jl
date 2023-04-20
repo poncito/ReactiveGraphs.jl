@@ -1,15 +1,24 @@
 struct Selecter{T} <: Operation{T} end
 
-# todo: refacto to avoid relying on the propagation
-function getvalue(node::ListNode, ::Selecter)
-    node_name, _ = getparentnames(node)
-    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
-end
+"""
+    select(x::Node, condition::Node; name)
 
+Bulds a node that contains the same value as node `x`,
+but that disables the updates of any node that depends on `x` when
+the value of `condition` is `false`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
 function select(x::Node, condition::Node; name::Union{Nothing,Symbol} = nothing)
     uniquename = genname(name)
     op = Selecter{getoperationtype(x)}()
     Node(uniquename, op, x, condition)
+end
+
+function getvalue(node::ListNode, ::Selecter)
+    node_name, _ = getparentnames(node)
+    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
 end
 
 function generate(

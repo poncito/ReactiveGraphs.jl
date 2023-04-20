@@ -4,8 +4,8 @@ struct Filter{T} <: Operation{T} end
     filter(x::Node, condition::Node; name)
 
 Bulds a node that contains the same value as node `x`,
-but that only forwards an update when the value of node `condition` 
-is true.
+but that does not update its children when
+the value of `condition` is true.
 
 If `name` is provided, it will be appended to the
 generated symbol that identifies the node.
@@ -16,7 +16,17 @@ function Base.filter(x::Node, condition::Node; name = nothing)
     Node(uniquename, op, x, condition)
 end
 
-function Base.filter(f::Function, x::Node; name::Union{Nothing,Symbol} = nothing)
+"""
+    filter(f::function, x::Node; name)
+
+Bulds a node that contains the same value as node `x`,
+but that only forwards an update when the function `f`
+is returns `true`, while evaluated on the value of node `x`. 
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
+function Base.filter(f::Function, x::Node; name = nothing)
     condition = map(f, x; name)
     if eltype(condition) != Bool
         throw(ErrorException("condition is not a boolean"))
@@ -26,7 +36,7 @@ end
 
 function getvalue(node::ListNode, ::Filter)
     node_name, _ = getparentnames(node)
-    getvalue(node, node_name) # todo: avoid starting from the leaf
+    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
 end
 
 function generate(

@@ -12,6 +12,15 @@ end
     nothing
 end
 
+"""julia
+    map(f, arg::Node, args::Node...; name)
+
+Creates a node whose value is given by
+calling `f` with the values of the nodes `(arg, arg...)`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+"""
 function Base.map(
     f::Function,
     arg::Node,

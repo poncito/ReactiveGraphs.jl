@@ -23,7 +23,27 @@ function Base.getindex(lag::Lag)
     lag.x[lag.i]
 end
 
-function lag(n::Integer, node::Node; name::Union{Nothing,Symbol} = nothing)
+"""julia
+    lag(n::Integer, node::Node; name)
+
+Creates a node that contains the `n`-th lagged value of `node`.
+
+If `name` is provided, it will be appended to the
+generated symbol that identifies the node.
+
+Example:
+```julia
+julia> i = input(Int)
+       n = lag(2, i)
+       map(print, n)
+       s = Source(i)
+       for x = 1:7
+           push!(i, x)
+       end
+12345
+```
+"""
+function lag(n::Integer, node::Node; name = nothing)
     T = getoperationtype(node)
     lagnode = foldl(Lag(T, n), node; name) do state, x
         push!(state, x)
