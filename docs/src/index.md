@@ -1,24 +1,26 @@
-# Dataflows.jl Documentation
+# Dataflows.jl
 
-```@contents
-Depth=3
-```
+This package provides a framework to run computations in a tolological order of the dependency graph.
+It aims to be fast and allocation free, for low-latency applications.
+
+## What does it do?
+
+Let's give an example.
+
+![Example of computational graph](assets/map.svg)
+
+Here, `A`, `B`, and `C` represent some inputs/sources to the graph.
+Meaning they contain some data.
+The nodes `1`, `2` and `3` correspond to derived data sets:
+- `1` depends on `A` and `B`,
+- `2` depends on `B`,
+- `3` depends on `1`, `2` and `C`.
+
+This only mean that when `A` is updated, the nodes `1` and `3` must be updated, and in this order.
+When `B` is updated, nodes `1`, `2` and `3` must be updated, either in (`1`, `2`, `3`) or (`2`, `1`, `3`) orders.
+Those 2 orders are called _topological_, for the DAG displayed above.
 
 ## Getting Started
-
-This library provides the following fundamental methods to build a graph:
-- [`input`](@ref)
-- [`map`](@ref)
-- [`inlinedmap`](@ref)
-- [`foldl`](@ref)
-
-Others to control its flow:
-- [`filter`](@ref)
-- [`select`](@ref)
-
-It also provides some convenience methods:
-- [`quiet`](@ref)
-- [`constant`](@ref)
 
 To build a graph, one needs to start with some inputs, which are roots of the graph.
 ```julia
@@ -67,7 +69,7 @@ updating all children nodes.
 
 ## Controlling the flow of the graph
 
-This package provides a way to avoid direct (`filter`) and indirect (`select`)
+This package provides a way to avoid direct [`filter`](@ref) and indirect [`select`](@ref)
 triggering of children.
 
 ### Filtering
@@ -77,7 +79,7 @@ input_1 = input(Float64)
 n = map(x->println("new update: $x"), input_1)
 ```
 To avoid triggering node `n` when the value of `input_1` is `NaN`,
-one can use [`filter`])(@ref).
+one can use [`filter`](@ref).
 ```julia
 input_1 = input(Float64)
 filtered = filter(x->!isnan(x), input_1)
@@ -155,6 +157,11 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
  Memory estimate: 0 bytes, allocs estimate: 0.
 ```
 ## API
+```@index
+Pages = ["index.md"]
+Order = [:function, :type]
+```
+
 ```@autodocs
 Modules=[DataFlows]
 ```

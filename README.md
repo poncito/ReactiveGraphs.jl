@@ -1,81 +1,37 @@
 # DataFlows 
 
-Computational graph, optimized for low latency.
+This package provides a framework to run computations in a tolological order of the dependency graph.
+It aims to be fast and allocation free, for low-latency applications.
 
-## When is it useful?
-> A dataflow program is a graph, where nodes represent operations and edges represent data paths. 
+## TL;DR
 
-Dataflows architectures are particularly relevant for building programs that process multiple data
-sources asynchronously.
-
-This module provides the components required to build a computational graph architecture.
-Its implementation optimizes latency first.
-To achieve high performance, the graph is compiled to allow for static dispatch of the *operations*,
-and solves for the type of each node at construction time.
-
-## Example
-
-### Mapping
-
-This example shows how to create a graph that contains two inputs, and a node that sums their value.
 ```julia
-input_1 = input(Int)
-input_2 = input(Int)
-node_sum = map(+, input_1, input_2)
-node_print = map(println, node_sum)
+julia>i1 = input(Int)
+      i2 = input(Bool)
+      i3 = input(Bool)
+      i1f = filter(i1, i2)
+      i1s = select(i1, i3)
+      n2 = map(x->x+1, i1f)
+      n3 = foldl((state, x)-> state + x, 1, i1s)
+      n4 = inlinedmap(+,n2,n3)
+      n5 = lag(1, n4)
+      
+      s1 = Source(i1)
+      s2 = Source(i2)
+      s3 = Source(i3)
+      s1[] = 1
+      s2[] = true
+      s3[] = true
+      v = 1
+      @benchmark setindex!($s1, $v)
+BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
+ Range (min … max):  5.240 ns … 128.238 ns  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     5.400 ns               ┊ GC (median):    0.00%
+ Time  (mean ± σ):   5.774 ns ±   1.958 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+  ▅█▇▂    ▁          ▁       ▁                                ▁
+  ████▄▄▄▇█▄▅▅▅▄▃▅▆▇▇█▇▆▆▄▅▅▅█▇▆▆▅▅▅▆▆▆▆▆▇▆▆▇▆▇▇▆▆▇█▇▆▆▆▆▆▆▆▆ █
+  5.24 ns      Histogram: log(frequency) by time      10.1 ns <
+
+ Memory estimate: 0 bytes, allocs estimate: 0.
 ```
-To ensure type stability, the type of the nodes is resolved at this stage:
-```julia
-julia> eltype(node_sum)
-Int64
-```
-
-To use this graph, we need to push values into the two inputs.
-```julia
-s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-s2 = Source(input_2) # compiles the graph. Nodes must not be added afterwards.
-s1[] = 1 # cannot print since s2 is not initialized
-s2[] = 2 # prints 3
-s3[] = 3 # prints 5
-```
-Each time an input is updated, the data will flow down the graph, 
-updating all children nodes.
-
-### Filtering
-
-One can stop the flow of data using `Base.filter`.
-```julia
-input_1 = input(Int)
-input_2 = input(Bool)
-node_filtered = filter(input_1, input_2)
-```
-The node `node_filtered` contains the value of `input_1`,
-but will only trigger when `input_2` is `true`.
-
-### Selecting
-In the previous filtering example, the node `node_filtered` always contains the value of `input_1`,
-and can be used to compute another node.
-To disable any node that would consume it, one can use `select`.
-```julia
-input_1 = input(Int)
-input_2 = input(Bool)
-input_3 = input(Int)
-node_selected = select(input_1, input_2)
-node_filtered = filter(input_1, input_2)
-map((x, y) -> println("node_selected"), node_selected, input_3)
-map((x, y) -> println("node_filtered"), node_filtered, input_3)
-s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-s2 = Source(input_2) # compiles the graph. Nodes must not be added afterwards.
-s3 = Source(input_3) # compiles the graph. Nodes must not be added afterwards.
-s1[] = 1
-s2[] = true
-s3[] = 2 # prints "node_selected" and "node_filtered"
-s2[] = false
-s3[] = 3 # prints "node_filtered" only
-```
-
-### Constants
-
-To create a node that contains a constant, and never propagates, use `constant`.
-The boolean constants are propagated by Julia's compiler.
-
