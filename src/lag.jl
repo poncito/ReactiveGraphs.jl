@@ -38,7 +38,7 @@ julia> i = input(Int)
        map(print, n)
        s = Source(i)
        for x = 1:7
-           push!(i, x)
+           s[] = x
        end
 12345
 ```

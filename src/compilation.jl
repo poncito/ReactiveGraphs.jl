@@ -8,15 +8,21 @@ end
     Source(::Node)
 
 Transforms an input node into a `Source`, which is a type stable version of the former.
-This type is used to `push!` values into the computational graph.
+This type is used to update the roots of the graph with `setindex!`, similarly to a `Ref`.
 The input objects are not used directly, for performance considerations.
 
 ```julia
 julia> i = input(String)
        m = map(println, i)
        s = Source(i)
-       push!(s, "example")
+       s[] = "example"
 example
+
+julia> i = input(Ref(0))
+       m = map(println, i)
+       s = Source(i)
+       s[] = ref -> ref[] = 123
+123
 ```
 """
 Source(node::Node) = Source(getname(node), getgraph(node)[])

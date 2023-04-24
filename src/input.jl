@@ -24,7 +24,7 @@ end
 
 Creates a node that will contain a element of type `T`.
 To push a value in the node, one need to wrap it in a `Source`,
-and call `push!`.
+and call `setindex!`. See [`Source`](@ref).
 
 If `name` is provided, it will be appended to the
 generated symbol that identifies the node.
@@ -33,7 +33,7 @@ Example:
 ```julia
 julia> i = input(Int)
        s = Source(i)
-       push!(s, 1)
+       s[] = 1
 ```
 """
 function input(::Type{T}; name = nothing) where {T}
@@ -48,7 +48,7 @@ end
 Creates a node that contains `x`.
 This should be used when `x` is mutable.
 To push a value in the node, one need to wrap it in a `Source`,
-and call `push!`.
+and call `setindex!`.  See [`Source`](@ref).
 
 If `name` is provided, it will be appended to the
 generated symbol that identifies the node.
@@ -57,7 +57,7 @@ Example:
 ```julia
 julia> i = input(Ref(0))
        s = Source(i)
-       push!(x->x[] = 1, s)
+       s[] = x -> x[] = 1
 ```
 """
 function input(x::T; name::Union{Nothing,Symbol} = nothing) where {T}
