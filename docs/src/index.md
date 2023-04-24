@@ -6,13 +6,19 @@ Depth=3
 
 ## Getting Started
 
-This library provides the following fundamental methods to build a graph
-(input, map, inlinemap and foldl),
-to control its flow (filter, select).
+This library provides the following fundamental methods to build a graph:
+- [`input`](@ref)
+- [`map`](@ref)
+- [`inlinedmap`](@ref)
+- [`foldl`](@ref)
 
-It also provides some convenient methods:
-- quiet
-- constant
+Others to control its flow:
+- [`filter`](@ref)
+- [`select`](@ref)
+
+It also provides some convenience methods:
+- [`quiet`](@ref)
+- [`constant`](@ref)
 
 To build a graph, one needs to start with some inputs, which are roots of the graph.
 ```julia
@@ -71,7 +77,7 @@ input_1 = input(Float64)
 n = map(x->println("new update: $x"), input_1)
 ```
 To avoid triggering node `n` when the value of `input_1` is `NaN`,
-one can use `filter`.
+one can use [`filter`])(@ref).
 ```julia
 input_1 = input(Float64)
 filtered = filter(x->!isnan(x), input_1)
@@ -95,7 +101,7 @@ end
 ```
 Even if `input_1` if filtered, when `input_2` is triggered, the value of `filtered` will be
 used, whether the filtering condition is activated or not.
-To prevent the computation of `n`, users should use `select` instead:
+To prevent the computation of `n`, users should use [`select`](@ref) instead:
 ```julia
 input_1 = input(Float64)
 input_2 = input(Nothing)
@@ -112,25 +118,12 @@ s1[] = NaN # prints nothing
 s2[] = nothing # prints "filtered" only
 ```
 
-## More functionnalities
-The user should also read the documentation of
-- foldl (to update a state)
-- inlinedmap (to avoid copying a state)
-- quiet (to prevent direct propagation)
-- constant
-- lag (to build nodes that contain previous values)
-
-## API
-```@docs
-input
-Source
-Base.map(::Function,::DataFlows.Node,::Vararg{DataFlows.Node})
-```
-
 ## Comparison with Observables.jl
 Observables provides a nice API 
 
 ## Benchmark 
+This library is meant to be fast, and allocation free.
+Here is an example using the main operations of DataFlows.jl.
 ```julia
 julia>i1 = input(Int)
       i2 = input(Bool)
@@ -160,5 +153,9 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
   5.24 ns      Histogram: log(frequency) by time      10.1 ns <
 
  Memory estimate: 0 bytes, allocs estimate: 0.
+```
+## API
+```@autodocs
+Modules=[DataFlows]
 ```
 
