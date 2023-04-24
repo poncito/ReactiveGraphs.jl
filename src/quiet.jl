@@ -1,4 +1,4 @@
-"""julia
+"""
     quiet(node::Node; name)
 
 Creates a node that contains the same value as `node`,

@@ -16,7 +16,7 @@ end
 
 # todo: can we have an linedmap with no argument?
 # if so, could we remove the constants?
-"""julia
+"""
     foldl(f, state, arg::Node, args::Node...; name)
 
 Creates a node that contains a state initialized by `state`.

@@ -23,7 +23,7 @@ function Base.getindex(lag::Lag)
     lag.x[lag.i]
 end
 
-"""julia
+"""
     lag(n::Integer, node::Node; name)
 
 Creates a node that contains the `n`-th lagged value of `node`.
