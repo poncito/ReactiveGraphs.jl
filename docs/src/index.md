@@ -23,10 +23,15 @@ Those 2 orders are called _topological_, for the DAG displayed above.
 ## Getting Started
 
 To build a graph, one needs to start with some inputs, which are roots of the graph.
+We can create inputs by providing any type, or by providing an object that will be mutated.
 ```julia
 input_1 = input(Int64)
-input_2 = input(Int64)
+input_2 = input(Ref(0))
 ```
+
+!!! Note "Inputs are never considered initialized"
+    For now, when creating an input from an object, the initial value
+    will not be considered _initialized_ before changing its value, or updating it.
 
 Then, derived nodes can be build with `map`
 ```julia
@@ -35,8 +40,8 @@ node_1 = map(input_1) do x
     2x 
 end
 node_2 = map(node_1, input_1, input_2) do x, y, z
-    println("node 2: $(x + y + z)")
-    x + y + z
+    println("node 2: $(x + y + z[])")
+    x + y + z[]
 end
 ```
 
@@ -44,22 +49,38 @@ end
     To ensure type stability, and performance,
     the types of the nodes are resolved at this stage.
     Hence the methods used in map must already be defined at this stage.
-    We can verify that node_sum contains an `Int`.
+    We can verify that `node_2` defined above contains a value of type `Int`.
     ```julia
-    julia> eltype(node_sum)
+    julia> eltype(node_2)
     Int64
     ```
 
 To use this graph, we need to push values into the two inputs.
+We can either push a new value, or a function that mutates the current value.
+To do so, we need to wrap our inputs into a `Source`, and push to the sources,
+and not the inputs directly.
+
 ```julia
-s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-s2 = Source(input_2) # compiles the graph. Nodes must not be added afterwards.
+s1 = Source(input_1) # Captures the current state of the graph. Nodes must not be added afterwards.
+s2 = Source(input_2) # Captures the current state of the graph. Nodes must not be added afterwards.
 s1[] = 1 # prints "node 1: 2". The second node cannot be evaluated since the data is missing
-s2[] = 2 # prints "node 2: 5"
+s2[] = (x -> x[] = 2)# prints "node 2: 5"
 s1[] = 3 # prints "node 1: 6" "node 2: 11".
 ```
-Each time an input is updated, the data will flow down the graph, 
+
+Introducing this wrapping may seem a bit cumbersome to the user.
+But it is used to achieve high performance.
+When creating a source, the current state of the graph is being captured in the
+parameters of the `Source` type.
+This allows to dispatch the subsequent calls to `push!` on performant generated methods.
+This capture of the the graph implies that we first need to build the complete graph
+before wrapping the inputs into sources.
+Otherwise, the nodes added subsequently will be ignored.
+
+As explained, in the introduction,
+each time an input is updated, the data will flow down the graph, 
 updating all children nodes.
+
 !!! note
     We can notice how updating the first input only updates `node_2` once.
     This differs with simple _reactive programming_ implementations,
