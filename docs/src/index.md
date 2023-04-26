@@ -95,12 +95,14 @@ triggering of children.
 
 ### Filtering
 Consider the following case:
+
 ```julia
 input_1 = input(Float64)
 n = map(x->println("new update: $x"), input_1)
 ```
 To avoid triggering node `n` when the value of `input_1` is `NaN`,
 one can use [`filter`](@ref).
+
 ```julia
 input_1 = input(Float64)
 filtered = filter(x->!isnan(x), input_1)
