@@ -8,6 +8,22 @@ export quiet
 export select
 export lag
 
+macro tryinline(e)
+    @static if VERSION >= v"1.8"
+        :(@inline $(esc(e)))
+    else
+        esc(e)
+    end
+end
+
+macro tryconst(e)
+    @static if VERSION >= v"1.8"
+        Expr(:const, esc(e))
+    else
+        esc(e)
+    end
+end
+
 TypeOrValue{X} = Union{X,Type{<:X}}
 
 struct TypeSymbol{x}

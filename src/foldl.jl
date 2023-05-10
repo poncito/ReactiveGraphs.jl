@@ -6,7 +6,7 @@ end
 @inline getvalue(::ListNode, element::Foldl) = getvalue(element)
 
 @inline function update!(m::Foldl, args...)
-    @inline state = m.f(m.state, args...)
+    @tryinline state = m.f(m.state, args...)
     if typeof(state) != typeof(m.state)
         throw(E)
     end

@@ -8,10 +8,9 @@ end
 @inline getvalue(::ListNode, element::Map) = getvalue(element)
 
 @inline function update!(m::Map, args...)
-    @inline m.x = m.f(args...)
+    @tryinline m.x = m.f(args...)
     nothing
 end
-
 """
     map(f, arg::Node, args::Node...; name)
 

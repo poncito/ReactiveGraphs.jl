@@ -1,6 +1,6 @@
 mutable struct Lag{T}
-    const x::Vector{T}
-    const n::Int
+    @tryconst x::Vector{T}
+    @tryconst n::Int
     i::Int
     initialized::Bool
 end
