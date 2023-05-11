@@ -50,6 +50,8 @@ jobs:
           file: lcov.info
   docs:
     name: Documentation
+    permissions:
+      contents: write
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
