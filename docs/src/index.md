@@ -144,7 +144,67 @@ s2[] = nothing # prints "filtered" only
 ```
 
 ## Comparison with Observables.jl
-Observables provides a nice API 
+`Dataflows.jl` executes nodes in a topological order of the graph, while
+`Observables.jl` uses a depth-first ordering (each node calling its children).
+
+```julia
+julia> using Observables
+julia> x1 = Observable(nothing)
+       x2 = map(x->println("x2"), x1)
+       x3 = map(x->println("x3"), x1)
+       x4 = map(x->println("x4"), x2, x3)
+       x1[] = nothing
+x2
+x4
+x3
+x4
+julia> using Dataflows
+       x1 = input(nothing)
+       x2 = map(x->println("x2"), x1)
+       x3 = map(x->println("x3"), x1)
+       x4 = map(x->println("x4"), x2, x3)
+       Source(x1)[] = nothing
+x2
+x3
+x4
+```
+
+Also, `Dataflows.jl` is designed for performance, in the case of static graphs,
+while Observables is designed for dynamic graphs.
+
+```julia
+julia> using BenchmarkTools
+julia> x1 = Observable(1)
+       x2 = map(x->x+1, x1)
+       @benchmark setindex!($x1, 2)
+BenchmarkTools.Trial: 10000 samples with 195 evaluations.
+ Range (min … max):  484.185 ns …  6.983 μs  ┊ GC (min … max): 0.00% … 90.47%
+ Time  (median):     490.810 ns              ┊ GC (median):    0.00%
+ Time  (mean ± σ):   496.060 ns ± 72.381 ns  ┊ GC (mean ± σ):  0.18% ±  1.22%
+
+     ▄██▆▃▁                                                     
+  ▁▃▆██████▇▅▄▄▄▃▃▃▄▃▃▃▃▃▂▃▃▂▂▂▂▂▂▂▂▂▁▂▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁▁ ▂
+  484 ns          Histogram: frequency by time          534 ns <
+
+ Memory estimate: 48 bytes, allocs estimate: 3.
+
+julia> x1 = input(Int)
+       x2 = map(x->x+1, x1)
+       s = Source(x1)
+       @benchmark setindex!($x1, 2)
+BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
+ Range (min … max):  1.500 ns … 10.625 ns  ┊ GC (min … max): 0.00% … 0.00%
+ Time  (median):     1.542 ns              ┊ GC (median):    0.00%
+ Time  (mean ± σ):   1.573 ns ±  0.221 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%
+
+           █         ▇        ▃         ▃         ▁          ▁
+  █▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▁▅ █
+  1.5 ns       Histogram: log(frequency) by time     1.75 ns <
+
+  Memory estimate: 0 bytes, allocs estimate: 0.
+
+```
+
 
 ## Benchmark 
 This library is meant to be fast, and allocation free.
