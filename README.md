@@ -1,3 +1,6 @@
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/DataFlows.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/DataFlows.jl/dev)
+
 # DataFlows 
 
 This package provides a framework to run computations in a tolological order of the dependency graph.
