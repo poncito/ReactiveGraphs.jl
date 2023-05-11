@@ -45,8 +45,8 @@ function generate(
 end
 
 @generated function getvalue(node::ListNode, imap::InlinedMap)
-    names = getparentnames(node) 
+    names = getparentnames(node)
     quote
-        Base.@ncall $(length(names)) imap.f i->(getvalue(node, TypeSymbol($names[i])))
+        Base.@ncall $(length(names)) imap.f i -> (getvalue(node, TypeSymbol($names[i])))
     end
 end

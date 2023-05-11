@@ -162,7 +162,7 @@ end
         n2 = filter(iseven, n1)
         c = sink(n2)
         s1 = Source(n1)
-        for i=1:4
+        for i = 1:4
             s1[] = i
         end
         @test c == [2, 4]

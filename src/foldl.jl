@@ -36,13 +36,18 @@ function Base.foldl(
     Node(genname(name), Foldl(f, state), arg, args...)
 end
 
-function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Foldl})
+function generate(
+    ::Symbol,
+    name::Symbol,
+    parentnames::NTuple{<:Any,Symbol},
+    ::Type{<:Foldl},
+)
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     args = (:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
-    Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
+        Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
     nodename_s = Symbol(:node, name)
     quote
         $updated_s = if $condition_initialized & $condition_updated

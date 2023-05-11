@@ -78,6 +78,9 @@ function generate(inputname::Symbol, name::Symbol, ::NTuple{<:Any,Symbol}, ::Typ
     if name == inputname
         push!(expr.args, :($(Expr(:call, :update!, nodename_s, :x))))
     end
-    push!(expr.args, :($initialized_s = $(name == inputname ? true : :(isinitialized($nodename_s)))))
+    push!(
+        expr.args,
+        :($initialized_s = $(name == inputname ? true : :(isinitialized($nodename_s)))),
+    )
     expr
 end

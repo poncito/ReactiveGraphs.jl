@@ -59,7 +59,8 @@ function Base.merge!(graph1::Graph, graph2::Graph, graphs...)
 end
 
 getnode(graph::Graph, s::TypeSymbol) = getnode(graph[], s)
-getnode(::Root, s::TypeSymbol) = throw(ErrorException("symbol $(getsymbol(s)) not found in graph"))
+getnode(::Root, s::TypeSymbol) =
+    throw(ErrorException("symbol $(getsymbol(s)) not found in graph"))
 function getnode(x::ListNode, v::TypeSymbol)
     if getname(x) == getsymbol(v)
         x
