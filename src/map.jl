@@ -38,6 +38,7 @@ function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::T
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
     nodename_s = Symbol(:node, name)
     quote
+        $initialized_s = $condition_initialized
         $updated_s = if $condition_initialized & $condition_updated
             $nodename_s = getnode(list, $(TypeSymbol(name)))
             $(Expr(:call, :update!, nodename_s, args...))
@@ -45,6 +46,5 @@ function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::T
         else
             false
         end
-        $initialized_s = $updated_s
     end
 end

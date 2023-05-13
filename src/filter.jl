@@ -27,9 +27,9 @@ If `name` is provided, it will be appended to the
 generated symbol that identifies the node.
 """
 function Base.filter(f::Function, x::Node; name = nothing)
-    condition = map(f, x; name)
+    condition = inlinedmap(f, x; name)
     if eltype(condition) != Bool
-        throw(ErrorException("condition is not a boolean"))
+        throw(ErrorException("map(f, x) is not a boolean node"))
     end
     filter(x, condition; name)
 end

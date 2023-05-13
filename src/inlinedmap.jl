@@ -39,8 +39,8 @@ function generate(
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
     quote
+        $initialized_s = $condition_initialized
         $updated_s = $condition_initialized & $condition_updated
-        $initialized_s = $updated_s
     end
 end
 

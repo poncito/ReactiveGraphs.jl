@@ -1,5 +1,11 @@
 # Dataflows.jl
 
+```@meta
+DocTestSetup = quote
+    using DataFlows
+end
+```
+
 This package provides a framework to run computations in a tolological order of the dependency graph.
 It aims to be fast and allocation free, for low-latency applications.
 
@@ -45,12 +51,28 @@ node_2 = map(node_1, input_1, input_2) do x, y, z
 end
 ```
 
+```@meta
+DocTestSetup = quote
+    using DataFlows
+    input_1 = input(Int64)
+    input_2 = input(Ref(0))
+    node_1 = map(input_1) do x
+        println("node 1: $(2x)")
+        2x 
+    end
+    node_2 = map(node_1, input_1, input_2) do x, y, z
+        println("node 2: $(x + y + z[])")
+        x + y + z[]
+    end
+end
+```
+
 !!! note
     To ensure type stability, and performance,
     the types of the nodes are resolved at this stage.
     Hence the methods used in map must already be defined at this stage.
     We can verify that `node_2` defined above contains a value of type `Int`.
-    ```julia
+    ```jldoctest
     julia> eltype(node_2)
     Int64
     ```
@@ -60,12 +82,26 @@ We can either push a new value, or a function that mutates the current value.
 To do so, we need to wrap our inputs into a `Source`, and push to the sources,
 and not the inputs directly.
 
-```julia
+```jldoctest; output = false
 s1 = Source(input_1) # Captures the current state of the graph. Nodes must not be added afterwards.
 s2 = Source(input_2) # Captures the current state of the graph. Nodes must not be added afterwards.
 s1[] = 1 # prints "node 1: 2". The second node cannot be evaluated since the data is missing
 s2[] = (x -> x[] = 2)# prints "node 2: 5"
 s1[] = 3 # prints "node 1: 6" "node 2: 11".
+
+# output
+
+node 1: 2
+node 2: 5
+node 1: 6
+node 2: 11
+3
+```
+
+```@meta
+DocTestSetup = quote
+    using DataFlows
+end
 ```
 
 Introducing this wrapping may seem a bit cumbersome to the user.
@@ -103,7 +139,7 @@ n = map(x->println("new update: $x"), input_1)
 To avoid triggering node `n` when the value of `input_1` is `NaN`,
 one can use [`filter`](@ref).
 
-```julia
+```jldoctest; output = false
 input_1 = input(Float64)
 filtered = filter(x->!isnan(x), input_1)
 n = map(x->println("new update: $x"), filtered)
@@ -111,6 +147,11 @@ n = map(x->println("new update: $x"), filtered)
 s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
 s1[] = 1.0 # prints "new update: 1.0"
 s1[] = NaN # prints nothing 
+
+# output
+
+new update: 1.0
+NaN
 ```
 
 ### Selecting
@@ -127,10 +168,10 @@ end
 Even if `input_1` if filtered, when `input_2` is triggered, the value of `filtered` will be
 used, whether the filtering condition is activated or not.
 To prevent the computation of `n`, users should use [`select`](@ref) instead:
-```julia
+```jldoctest; output = false
 input_1 = input(Float64)
 input_2 = input(Nothing)
-filtered = select(x->!isnan(x), input_1)
+filtered = filter(x->!isnan(x), input_1)
 selected = select(x->!isnan(x), input_1)
 map((x,y) -> println("filtered"), filtered, input_2)
 map((x,y) -> println("selected"), selected, input_2)
@@ -141,29 +182,41 @@ s1[] = 1.0 # prints nothing
 s2[] = nothing # prints "filtered" and then "selected"
 s1[] = NaN # prints nothing 
 s2[] = nothing # prints "filtered" only
+
+# output
+
+filtered
+selected
+filtered
 ```
 
 ## Comparison with Observables.jl
 `Dataflows.jl` executes nodes in a topological order of the graph, while
 `Observables.jl` uses a depth-first ordering (each node calling its children).
 
-```julia
-julia> using Observables
-julia> x1 = Observable(nothing)
-       x2 = map(x->println("x2"), x1)
-       x3 = map(x->println("x3"), x1)
-       x4 = map(x->println("x4"), x2, x3)
-       x1[] = nothing
+```jldoctest; output = false
+using Observables
+x1 = Observable(nothing)
+x2 = map(x->println("x2"), x1)
+x3 = map(x->println("x3"), x1)
+x4 = map((x, y)->println("x4"), x2, x3)
+x1[] = nothing # prints x2 x4 x3 x4
+
+using DataFlows
+x1 = input(nothing)
+x2 = map(x->println("x2"), x1)
+x3 = map(x->println("x3"), x1)
+x4 = map((x,y)->println("x4"), x2, x3)
+Source(x1)[] = nothing # prints x2 x3 x4
+
+# output
+x2
+x3
+x4
 x2
 x4
 x3
 x4
-julia> using Dataflows
-       x1 = input(nothing)
-       x2 = map(x->println("x2"), x1)
-       x3 = map(x->println("x3"), x1)
-       x4 = map(x->println("x4"), x2, x3)
-       Source(x1)[] = nothing
 x2
 x3
 x4
