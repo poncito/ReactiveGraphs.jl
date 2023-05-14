@@ -123,6 +123,13 @@ updating all children nodes.
     with repetitions (typycally if the graph is not a tree).
     Here the graph is traversed in the topologic order of the construction.
 
+## Updating several nodes at once
+
+Sometimes, it can be useful to update several inputs synchronously.
+To do so, the users can 
+Users can create sources with more than one node,
+
+
 ## Controlling the flow of the graph
 
 This package provides a way to avoid direct [`filter`](@ref) and indirect [`select`](@ref)

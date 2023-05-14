@@ -1,9 +1,10 @@
 # todo: ensure that the node exists, and is an input
-struct Source{inputnames,LN<:ListNode}
+struct Source{inputname,T,LN<:ListNode}
     list::LN
-    function Source(listnode::LN, inputnames::Symbol...) where {LN<:ListNode}
-        @assert !isempty(inputnames)
-        new{inputnames,LN}(listnode)
+    function Source(listnode::LN, inputname::Symbol) where {LN<:ListNode}
+        node = getnode(listnode, TypeSymbol(inputname))
+        T = eltype(node)
+        new{inputname,T,LN}(listnode)
     end
 end
 
@@ -17,7 +18,7 @@ The input objects are not used directly, for performance considerations.
 ```julia
 julia> i = input(String)
        m = map(println, i)
-       s = Source(i)
+       s = source(i)
        push!(s, "example")
 example
 
@@ -27,50 +28,44 @@ julia> i = input(Ref(0))
        push!(s, ref -> ref[] = 123)
 123
 ```
+
+Sources can also be used simultaneously,
+
+```julia
+julia> i1 = input(Int)
+       i2 = input(Int)
+       m1 = map(+, i1, i2)
+       map(print, m)
+       s1 = source(i1)
+       s2 = source(i2)
+       push!(s1, s2, 1, 2)
+       push!(s1, s2, 3, 4)
+37
+```
 """
 Source(node::Node) = Source(getgraph(node)[], getname(node))
 
-"""
-    Source(::Node, ::Node...)
+function Base.show(io::IO, s::Source{inputname,T}) where {inputname,T}
+    print(io, "Source($inputname, $T)")
+end
 
-Transforms a set of input nodes into a `Source`, which is a type stable version of a set of nodes.
-This type is used to update the roots of the graph with `push!`.
-The input objects are not used directly, for performance considerations.
+getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
+getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
 
-```julia
-julia> i1 = input(String)
-       i2 = input(String)
-       m1 = map(x->println(join(x, " ")), i1, i2)
-       s = Source(i1, i2)
-       push!(s, "a", "b")
-"a b"
+Base.push!(src::Source, x) = push!((src,), (x,))
 
-julia> i1 = input(Ref(0))
-       i2 = input(Ref(0))
-       m = map((x, y) -> println(x+y), i1, i2)
-       s = Source(i1, i2)
-       push!(s, ref -> ref[] = 123, ref -> ref[] = 321)
-444
-```
-"""
-function Source(node::Node)
-    nodes = (node, nodes...)
-    aregraphsequal = allequal(map(getgraph, nodes))
-    if !aregraphsequal
-        throw(ErrorException("Nodes do not belong to the same graphs"))
+@generated function Base.push!(src::NTuple{N,Source}, x::NTuple{N,Any}) where {N}
+    src_types = fieldtypes(src)
+    inputnames = getinputname.(src_types)
+    listtypes = getlisttype.(src_types)
+
+    if !allequal(listtypes)
+        throw(ErrorException("nodes do not belong to the same graph"))
     end
-    Source(getgraph(node)[], map(getname, nodes)...)
-end
-
-function Base.show(io::IO, s::Source{inputnames}) where {inputnames}
-    print(io, "Source($(join(inputnames, ", ")))")
-end
-
-@generated function Base.push!(src::Source{inputnames,LN}, x...) where {inputnames,LN}
-    @assert length(x) == length(inputnames)
+    LN = first(listtypes)
 
     expr = quote
-        list = src.list
+        list = first(src).list
     end
     generate!(expr, LN, inputnames...)
     push!(expr.args, nothing)

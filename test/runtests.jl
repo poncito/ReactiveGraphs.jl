@@ -50,9 +50,10 @@ end
         n1 = input(Int)
         n2 = input(Int)
         c = sink(+, n1, n2)
-        s = Source(n1, n2)
-        push!(s, 1, 2)
-        push!(s, 3, 2)
+        s1 = Source(n1)
+        s2 = Source(n2)
+        push!((s1, s2), (1, 2))
+        push!((s1, s2), (3, 2))
         @test c == [3, 5]
     end
 
@@ -62,6 +63,24 @@ end
         s = Source(n1)
         push!(s, x -> x[] = 2)
         @test c == [4]
+    end
+
+    @testset "mutable and immutable inputs" begin
+        n1 = input(Ref(0))
+        n2 = input(Int)
+        c = sink((x, y) -> 2x[] + y, n1, n2)
+        s1 = Source(n1)
+        s2 = Source(n2)
+        push!((s1, s2), (x -> x[] = 2, 3))
+        @test c == [7]
+    end
+
+    @testset "disjoint graphs" begin
+        n1 = input(Int)
+        n2 = input(Int)
+        s1 = Source(n1)
+        s2 = Source(n2)
+        @test_throws ErrorException push!((s1, s2), (1, 2))
     end
 end
 
@@ -175,6 +194,13 @@ end
         end
         @test c == [2, 4]
     end
+
+    @testset "filter non-boolean condition" begin
+        n1 = input(Int)
+        n2 = input(Int)
+        @test_throws ErrorException filter(n1, n2)
+        @test_throws ErrorException filter(identity, n1)
+    end
 end
 
 @testset "selecter" begin
@@ -209,6 +235,13 @@ end
             push!(s1, i)
         end
         @test c == [2, 4, 6]
+    end
+
+    @testset "selecter non-boolean condition" begin
+        n1 = input(Int)
+        n2 = input(Int)
+        @test_throws ErrorException select(n1, n2)
+        @test_throws ErrorException select(identity, n1)
     end
 end
 
