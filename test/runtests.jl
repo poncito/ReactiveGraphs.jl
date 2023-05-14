@@ -1,8 +1,15 @@
+using BenchmarkTools
 using DataFlows
 using Test
-using BenchmarkTools
 
 import DataFlows: Graph, getoperationtype, Node
+
+macro testnoalloc(expr, kws...)
+    esc(quote
+        t = @benchmark $expr samples = 1 evals = 1
+        @test(t.allocs == 0, $(kws...))
+    end)
+end
 
 function collectgraph(g::Graph)
     c = []
@@ -52,9 +59,9 @@ end
         c = sink(+, n1, n2)
         s1 = Source(n1)
         s2 = Source(n2)
-        push!((s1, s2), (1, 2))
-        push!((s1, s2), (3, 2))
-        @test c == [3, 5]
+        push!(s1 => 1, s2 => 2)
+        push!(s1 => 3, s2 => 4)
+        @test c == [3, 7]
     end
 
     @testset "1 mutable input" begin
@@ -71,7 +78,7 @@ end
         c = sink((x, y) -> 2x[] + y, n1, n2)
         s1 = Source(n1)
         s2 = Source(n2)
-        push!((s1, s2), (x -> x[] = 2, 3))
+        push!(s1 => x -> x[] = 2, s2 => 3)
         @test c == [7]
     end
 
@@ -80,7 +87,7 @@ end
         n2 = input(Int)
         s1 = Source(n1)
         s2 = Source(n2)
-        @test_throws ErrorException push!((s1, s2), (1, 2))
+        @test_throws ErrorException push!(s1 => 1, s2 => 2)
     end
 end
 
@@ -286,4 +293,24 @@ end
         push!(s1, i)
     end
     @test c == 1:8
+end
+
+@testset "no allocation" begin
+    i1 = input(Int)
+    i2 = input(Bool)
+    i3 = input(Bool)
+    i1f = filter(i1, i2)
+    i1s = select(i1, i3)
+    n2 = map(x->x+1, i1f)
+    n3 = foldl((state, x)-> state + x, 1, i1s)
+    n4 = inlinedmap(+,n2,n3)
+    n5 = lag(1, n4)
+
+    s1 = Source(i1)
+    s2 = Source(i2)
+    s3 = Source(i3)
+    push!(s1, 1)
+    push!(s2, true)
+    push!(s3, true)
+    @testnoalloc push!($s1, 1)
 end

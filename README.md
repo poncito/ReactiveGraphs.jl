@@ -25,7 +25,7 @@ julia>i1 = input(Int)
       s1 = Source(i1)
       s2 = Source(i2)
       s3 = Source(i3)
-      push!((s1, s2, s3), (true, true, 1))
+      push!(s1 => true, s2 => true, s3 => 1)
       v = 1
       @benchmark push!($s1, $v)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.                                      
