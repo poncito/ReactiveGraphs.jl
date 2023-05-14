@@ -40,7 +40,7 @@ function getvalue(node::ListNode, ::Selecter)
 end
 
 function generate(
-    ::Symbol,
+    ::Any,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:Selecter},

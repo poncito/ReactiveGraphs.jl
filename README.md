@@ -4,9 +4,9 @@
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/DataFlows.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://poncito.github.io/DataFlows.jl/dev)
 
-# DataFlows 
+# DataFlows.jl
 
-This package provides a framework to run computations in a tolological order of the dependency graph.
+This package provides a framework to run computations in a topological order of the dependency graph.
 It aims to be fast and allocation free, for low-latency applications.
 
 ## TL;DR
@@ -25,9 +25,9 @@ julia>i1 = input(Int)
       s1 = Source(i1)
       s2 = Source(i2)
       s3 = Source(i3)
-      s1[] = 1
-      s2[] = true
-      s3[] = true
+      push!(s1, 1)
+      push!(s2, true)
+      push!(s3, true)
       v = 1
       @benchmark setindex!($s1, $v)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.

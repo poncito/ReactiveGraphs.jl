@@ -42,17 +42,25 @@ end
         n1 = input(Int)
         c = sink(x -> 2x, n1)
         s = Source(n1)
-        s[] = 2
+        push!(s, 2)
         @test c == [4]
+    end
+
+    @testset "2 inputs" begin
+        n1 = input(Int)
+        n2 = input(Int)
+        c = sink(+, n1, n2)
+        s = Source(n1, n2)
+        push!(s, 1, 2)
+        push!(s, 3, 2)
+        @test c == [3, 5]
     end
 
     @testset "1 mutable input" begin
         n1 = input(Ref(0))
         c = sink(x -> 2x[], n1)
         s = Source(n1)
-        s[] = x -> begin
-            x[] = 2
-        end
+        push!(s, x -> x[] = 2)
         @test c == [4]
     end
 end
@@ -64,9 +72,9 @@ end
         c = sink(+, n1, n2)
         s1 = Source(n1)
         s2 = Source(n2)
-        s1[] = 1
-        s2[] = 2
-        s1[] = 3
+        push!(s1, 1)
+        push!(s2, 2)
+        push!(s1, 3)
         @test c == [3, 5]
     end
 
@@ -80,9 +88,9 @@ end
         c = sink(m)
         s1 = Source(n1)
         s2 = Source(n2)
-        s1[] = 1
-        s2[] = 2
-        s1[] = 3
+        push!(s1, 1)
+        push!(s2, 2)
+        push!(s1, 3)
         @test c == [3, 5]
     end
 
@@ -93,9 +101,9 @@ end
         c2 = sink((x, y) -> -(x + y), n1, n2)
         s1 = Source(n1)
         s2 = Source(n2)
-        s1[] = 1
-        s2[] = 2
-        s1[] = 3
+        push!(s1, 1)
+        push!(s2, 2)
+        push!(s1, 3)
         @test c1 == [3, 5]
         @test c2 == [-3, -5]
     end
@@ -107,8 +115,8 @@ end
         n2 = foldl(+, 1, n1)
         c = sink(n2)
         s = Source(n1)
-        s[] = 2
-        s[] = 3
+        push!(s, 2)
+        push!(s, 3)
         @test c == [3, 6]
     end
 
@@ -121,8 +129,8 @@ end
         n3 = map(x -> x[], n2)
         c = sink(n3)
         s = Source(n1)
-        s[] = 2
-        s[] = 3
+        push!(s, 2)
+        push!(s, 3)
         @test c == [3, 6]
     end
 end
@@ -134,8 +142,8 @@ end
     c = sink(n3)
     s1 = Source(n1)
     s2 = Source(n2)
-    s1[] = 1
-    s2[] = 2
+    push!(s1, 1)
+    push!(s2, 2)
     @test c == [3]
 end
 
@@ -147,13 +155,13 @@ end
         c = sink(n3)
         s1 = Source(n1)
         s2 = Source(n2)
-        s1[] = 2
-        s2[] = false
-        s1[] = 3
-        s2[] = true
-        s1[] = 4
-        s2[] = false
-        s1[] = 5
+        push!(s1, 2)
+        push!(s2, false)
+        push!(s1, 3)
+        push!(s2, true)
+        push!(s1, 4)
+        push!(s2, false)
+        push!(s1, 5)
         @test c == [3, 4]
     end
 
@@ -163,7 +171,7 @@ end
         c = sink(n2)
         s1 = Source(n1)
         for i = 1:4
-            s1[] = i
+            push!(s1, i)
         end
         @test c == [2, 4]
     end
@@ -180,15 +188,15 @@ end
         s1 = Source(n1)
         s2 = Source(n2)
         s4 = Source(n4)
-        s1[] = 1
-        s2[] = false
-        s4[] = 2
-        s2[] = true
-        s1[] = 3
-        s4[] = 4
-        s2[] = false
-        s1[] = 5
-        s4[] = 6
+        push!(s1, 1)
+        push!(s2, false)
+        push!(s4, 2)
+        push!(s2, true)
+        push!(s1, 3)
+        push!(s4, 4)
+        push!(s2, false)
+        push!(s1, 5)
+        push!(s4, 6)
         @test c == [3, 5, 7]
     end
 
@@ -198,7 +206,7 @@ end
         c = sink(n2)
         s1 = Source(n1)
         for i = 1:7
-            s1[] = i
+            push!(s1, i)
         end
         @test c == [2, 4, 6]
     end
@@ -209,15 +217,15 @@ end
     n2 = constant(1)
     c = sink(+, n1, n2)
     s = Source(n1)
-    s[] = 2
+    push!(s, 2)
     @test c == [3]
 
     n1 = input(Bool)
     n2 = constant(true)
     c = sink(&, n1, n2)
     s = Source(n1)
-    s[] = true
-    s[] = false
+    push!(s, true)
+    push!(s, false)
     @test c == [true, false]
 end
 
@@ -228,11 +236,11 @@ end
     c = sink(+, n1, n3)
     s1 = Source(n1)
     s2 = Source(n2)
-    s1[] = 1
-    s2[] = 2
-    s1[] = 3
-    s2[] = 4
-    s1[] = 5
+    push!(s1, 1)
+    push!(s2, 2)
+    push!(s1, 3)
+    push!(s2, 4)
+    push!(s1, 5)
     @test c == [5, 9]
 end
 
@@ -242,7 +250,7 @@ end
     c = sink(n2)
     s1 = Source(n1)
     for i = 1:10
-        s1[] = i
+        push!(s1, i)
     end
     @test c == 1:8
 end

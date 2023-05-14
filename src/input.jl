@@ -68,19 +68,22 @@ end
 
 getvalue(::ListNode, element::Input) = getvalue(element)
 
-function generate(inputname::Symbol, name::Symbol, ::NTuple{<:Any,Symbol}, ::Type{<:Input})
+function generate(inputnames::NTuple{<:Any,Symbol}, name::Symbol, ::NTuple{<:Any,Symbol}, ::Type{<:Input})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     nodename_s = Symbol(:node, name)
+    i = findfirst(==(name), inputnames)
+    updated = !isnothing(i)
+
     expr = Expr(:quote)
-    push!(expr.args, :($updated_s = $(name == inputname)))
+    push!(expr.args, :($updated_s = $updated))
     push!(expr.args, :($nodename_s = getnode(list, $(TypeSymbol(name)))))
-    if name == inputname
-        push!(expr.args, :($(Expr(:call, :update!, nodename_s, :x))))
+    if updated
+        push!(expr.args, :($(Expr(:call, :update!, nodename_s, Expr(:ref, :x, i)))))
     end
     push!(
         expr.args,
-        :($initialized_s = $(name == inputname ? true : :(isinitialized($nodename_s)))),
+        :($initialized_s = $(updated ? true : :(isinitialized($nodename_s)))),
     )
     expr
 end

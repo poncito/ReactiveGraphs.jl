@@ -85,9 +85,9 @@ and not the inputs directly.
 ```jldoctest; output = false
 s1 = Source(input_1) # Captures the current state of the graph. Nodes must not be added afterwards.
 s2 = Source(input_2) # Captures the current state of the graph. Nodes must not be added afterwards.
-s1[] = 1 # prints "node 1: 2". The second node cannot be evaluated since the data is missing
-s2[] = (x -> x[] = 2)# prints "node 2: 5"
-s1[] = 3 # prints "node 1: 6" "node 2: 11".
+push!(s1, 1) # prints "node 1: 2". The second node cannot be evaluated since the data is missing
+push!(s2, x -> x[] = 2)# prints "node 2: 5"
+push!(s1, 3) # prints "node 1: 6" "node 2: 11".
 
 # output
 
@@ -95,7 +95,6 @@ node 1: 2
 node 2: 5
 node 1: 6
 node 2: 11
-3
 ```
 
 ```@meta
@@ -145,13 +144,12 @@ filtered = filter(x->!isnan(x), input_1)
 n = map(x->println("new update: $x"), filtered)
 
 s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-s1[] = 1.0 # prints "new update: 1.0"
-s1[] = NaN # prints nothing 
+push!(s1, 1.0) # prints "new update: 1.0"
+push!(s1, NaN) # prints nothing 
 
 # output
 
 new update: 1.0
-NaN
 ```
 
 ### Selecting
@@ -178,10 +176,10 @@ map((x,y) -> println("selected"), selected, input_2)
     
 s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
 s2 = Source(input_2) # compiles the graph. Nodes must not be added afterwards.
-s1[] = 1.0 # prints nothing 
-s2[] = nothing # prints "filtered" and then "selected"
-s1[] = NaN # prints nothing 
-s2[] = nothing # prints "filtered" only
+push!(s1, 1.0) # prints nothing 
+push!(s2, nothing) # prints "filtered" and then "selected"
+push!(s1, NaN) # prints nothing 
+push!(s2, nothing) # prints "filtered" only
 
 # output
 
@@ -207,7 +205,7 @@ x1 = input(nothing)
 x2 = map(x->println("x2"), x1)
 x3 = map(x->println("x3"), x1)
 x4 = map((x,y)->println("x4"), x2, x3)
-Source(x1)[] = nothing # prints x2 x3 x4
+push!(Source(x1), nothing) # prints x2 x3 x4
 
 # output
 x2
@@ -244,7 +242,7 @@ BenchmarkTools.Trial: 10000 samples with 195 evaluations.
 julia> x1 = input(Int)
        x2 = map(x->x+1, x1)
        s = Source(x1)
-       @benchmark setindex!($x1, 2)
+       @benchmark push!($x1, 2)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
  Range (min … max):  1.500 ns … 10.625 ns  ┊ GC (min … max): 0.00% … 0.00%
  Time  (median):     1.542 ns              ┊ GC (median):    0.00%
@@ -276,11 +274,11 @@ julia>i1 = input(Int)
       s1 = Source(i1)
       s2 = Source(i2)
       s3 = Source(i3)
-      s1[] = 1
-      s2[] = true
-      s3[] = true
+      push!(s1, 1)
+      push!(s2, true)
+      push!(s3, true)
       v = 1
-      @benchmark setindex!($s1, $v)
+      @benchmark push!($s1, $v)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
  Range (min … max):  5.240 ns … 128.238 ns  ┊ GC (min … max): 0.00% … 0.00%
  Time  (median):     5.400 ns               ┊ GC (median):    0.00%

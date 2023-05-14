@@ -29,7 +29,7 @@ function Base.map(f::Function, arg::Node, args::Node...; name = nothing)
 end
 
 
-function generate(::Symbol, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Map})
+function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Map})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     args = (:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames)
