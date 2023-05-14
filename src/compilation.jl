@@ -38,8 +38,8 @@ julia> i1 = input(Int)
        map(print, m)
        s1 = Source(i1)
        s2 = Source(i2)
-       push!((s1, s2), (1, 2))
-       push!((s1, s2), (3, 4))
+       push!(s1 => 1, s2 => 2)
+       push!(s1 => 3, s2 => 4)
 37
 ```
 """
