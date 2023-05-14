@@ -2,6 +2,8 @@ push!(LOAD_PATH, "../src/")
 using Documenter
 using DataFlows
 
+DocMeta.setdocmeta!(DataFlows, :DocTestSetup, :(using DataFlows); recursive = true)
+
 makedocs(
     modules = [DataFlows],
     pages = ["Home" => "index.md"],

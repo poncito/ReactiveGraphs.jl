@@ -33,7 +33,7 @@ Example:
 ```julia
 julia> i = input(Int)
        s = Source(i)
-       s[] = 1
+       push!(s, 1)
 ```
 """
 function input(::Type{T}; name = nothing) where {T}
@@ -57,7 +57,7 @@ Example:
 ```julia
 julia> i = input(Ref(0))
        s = Source(i)
-       s[] = x -> x[] = 1
+       push!(s, x -> x[] = 1)
 ```
 """
 function input(x::T; name::Union{Nothing,Symbol} = nothing) where {T}
@@ -68,7 +68,12 @@ end
 
 getvalue(::ListNode, element::Input) = getvalue(element)
 
-function generate(inputnames::NTuple{<:Any,Symbol}, name::Symbol, ::NTuple{<:Any,Symbol}, ::Type{<:Input})
+function generate(
+    inputnames::NTuple{<:Any,Symbol},
+    name::Symbol,
+    ::NTuple{<:Any,Symbol},
+    ::Type{<:Input},
+)
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     nodename_s = Symbol(:node, name)
@@ -81,9 +86,6 @@ function generate(inputnames::NTuple{<:Any,Symbol}, name::Symbol, ::NTuple{<:Any
     if updated
         push!(expr.args, :($(Expr(:call, :update!, nodename_s, Expr(:ref, :x, i)))))
     end
-    push!(
-        expr.args,
-        :($initialized_s = $(updated ? true : :(isinitialized($nodename_s)))),
-    )
+    push!(expr.args, :($initialized_s = $(updated ? true : :(isinitialized($nodename_s)))))
     expr
 end

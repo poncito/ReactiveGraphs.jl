@@ -15,15 +15,15 @@ Transforms an input node into a `Source`, which is a type stable version of the 
 This type is used to update the roots of the graph with `Base.push!`.
 The input objects are not used directly, for performance considerations.
 
-```julia
+```jldoctest
 julia> i = input(String)
-       m = map(println, i)
-       s = source(i)
+       map(println, i)
+       s = Source(i)
        push!(s, "example")
 example
 
 julia> i = input(Ref(0))
-       m = map(println, i)
+       map(x->println(x[]), i)
        s = Source(i)
        push!(s, ref -> ref[] = 123)
 123
@@ -31,15 +31,15 @@ julia> i = input(Ref(0))
 
 Sources can also be used simultaneously,
 
-```julia
+```jldoctest
 julia> i1 = input(Int)
        i2 = input(Int)
-       m1 = map(+, i1, i2)
+       m = map(+, i1, i2)
        map(print, m)
-       s1 = source(i1)
-       s2 = source(i2)
-       push!(s1, s2, 1, 2)
-       push!(s1, s2, 3, 4)
+       s1 = Source(i1)
+       s2 = Source(i2)
+       push!(s1 => 1, s2 => 2)
+       push!(s1 => 3, s2 => 4)
 37
 ```
 """
@@ -52,10 +52,10 @@ end
 getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
 getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
 
-Base.push!(src::Source, x) = push!((src,), (x,))
+Base.push!(src::Source, x) = push!(src=>x)
 
-@generated function Base.push!(src::NTuple{N,Source}, x::NTuple{N,Any}) where {N}
-    src_types = fieldtypes(src)
+@generated function Base.push!(p::Pair{<:Source,<:Any}...)
+    src_types = p .|> fieldtypes .|> first
     inputnames = getinputname.(src_types)
     listtypes = getlisttype.(src_types)
 
@@ -65,7 +65,8 @@ Base.push!(src::Source, x) = push!((src,), (x,))
     LN = first(listtypes)
 
     expr = quote
-        list = first(src).list
+        x = Base.Cartesian.@ncall $(length(p)) tuple i->p[i][2]
+        list = p[1][1].list
     end
     generate!(expr, LN, inputnames...)
     push!(expr.args, nothing)
