@@ -28,7 +28,7 @@ function inlinedmap(f, arg::Node, args::Node...; name = nothing)
 end
 
 function generate(
-    ::Symbol,
+    ::Any,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:InlinedMap},

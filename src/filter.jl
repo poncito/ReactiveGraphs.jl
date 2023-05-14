@@ -11,6 +11,9 @@ If `name` is provided, it will be appended to the
 generated symbol that identifies the node.
 """
 function Base.filter(x::Node, condition::Node; name = nothing)
+    if eltype(condition) != Bool
+        throw(ErrorException("eltype(condition) is $(eltype(condition)), expected Bool"))
+    end
     uniquename = genname(name)
     op = Filter{getoperationtype(x)}()
     Node(uniquename, op, x, condition)
@@ -40,7 +43,7 @@ function getvalue(node::ListNode, ::Filter)
 end
 
 function generate(
-    ::Symbol,
+    ::Any,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:Filter},

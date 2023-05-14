@@ -37,7 +37,7 @@ function Base.foldl(
 end
 
 function generate(
-    ::Symbol,
+    ::Any,
     name::Symbol,
     parentnames::NTuple{<:Any,Symbol},
     ::Type{<:Foldl},
