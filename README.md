@@ -25,19 +25,17 @@ julia>i1 = input(Int)
       s1 = Source(i1)
       s2 = Source(i2)
       s3 = Source(i3)
-      push!(s1, 1)
-      push!(s2, true)
-      push!(s3, true)
+      push!((s1, s2, s3), (true, true, 1))
       v = 1
-      @benchmark setindex!($s1, $v)
-BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
- Range (min … max):  5.240 ns … 128.238 ns  ┊ GC (min … max): 0.00% … 0.00%
- Time  (median):     5.400 ns               ┊ GC (median):    0.00%
- Time  (mean ± σ):   5.774 ns ±   1.958 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%
+      @benchmark push!($s1, $v)
+BenchmarkTools.Trial: 10000 samples with 1000 evaluations.                                      
+Range (min … max):  8.708 ns … 27.625 ns  ┊ GC (min … max): 0.00% … 0.00%                      
+Time  (median):     8.792 ns              ┊ GC (median):    0.00%                              
+Time  (mean ± σ):   8.800 ns ±  0.252 ns  ┊ GC (mean ± σ):  0.00% ± 0.00%                      
 
-  ▅█▇▂    ▁          ▁       ▁                                ▁
-  ████▄▄▄▇█▄▅▅▅▄▃▅▆▇▇█▇▆▆▄▅▅▅█▇▆▆▅▅▅▆▆▆▆▆▇▆▆▇▆▇▇▆▆▇█▇▆▆▆▆▆▆▆▆ █
-  5.24 ns      Histogram: log(frequency) by time      10.1 ns <
+ ▂       ▆       █       ▄▃       ▂       ▂                 ▁                                  
+ █▁▁▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁██▁▁▁▁▁▁▁█▁▁▁▁▁▁▁█▁▁▁▁▁▁▁▆▁▁▁▁▁▁▁▆ █                                  
+ 8.71 ns      Histogram: log(frequency) by time        9 ns <                                  
 
- Memory estimate: 0 bytes, allocs estimate: 0.
+Memory estimate: 0 bytes, allocs estimate: 0.    
 ```
