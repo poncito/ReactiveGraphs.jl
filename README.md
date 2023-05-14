@@ -1,6 +1,8 @@
+[![CI](https://github.com/poncito/DataFlows.jl/workflows/CI/badge.svg)](https://github.com/poncito/DataFlows.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/poncito/DataFlows.jl/branch/main/graph/badge.svg?token=DZ7SSICAG6)](https://codecov.io/gh/poncito/DataFlows.jl)
+
 [![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/DataFlows.jl/stable)
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://poncito.github.io/DataFlows.jl/dev)
-[![codecov](https://codecov.io/gh/poncito/DataFlows.jl/branch/main/graph/badge.svg?token=DZ7SSICAG6)](https://codecov.io/gh/poncito/DataFlows.jl)
 
 # DataFlows 
 
