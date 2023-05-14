@@ -24,6 +24,10 @@ macro tryconst(e)
     end
 end
 
+@static if VERSION < v"1.8"
+    allequal(itr) = isempty(itr) ? true : all(isequal(first(itr)), itr)
+end
+
 TypeOrValue{X} = Union{X,Type{<:X}}
 
 struct TypeSymbol{x}
