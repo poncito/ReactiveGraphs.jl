@@ -36,12 +36,7 @@ function Base.foldl(
     Node(genname(name), Foldl(f, state), arg, args...)
 end
 
-function generate(
-    ::Any,
-    name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
-    ::Type{<:Foldl},
-)
+function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Foldl})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     args = (:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames)

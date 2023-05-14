@@ -42,12 +42,7 @@ function getvalue(node::ListNode, ::Filter)
     getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
 end
 
-function generate(
-    ::Any,
-    name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
-    ::Type{<:Filter},
-)
+function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Filter})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
     args = [:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames]
