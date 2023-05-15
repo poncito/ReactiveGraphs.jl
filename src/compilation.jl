@@ -52,7 +52,7 @@ end
 getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
 getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
 
-Base.push!(src::Source, x) = push!(src=>x)
+Base.push!(src::Source, x) = push!(src => x)
 
 @generated function Base.push!(p::Pair{<:Source,<:Any}...)
     src_types = p .|> fieldtypes .|> first
@@ -65,7 +65,7 @@ Base.push!(src::Source, x) = push!(src=>x)
     LN = first(listtypes)
 
     expr = quote
-        x = Base.Cartesian.@ncall $(length(p)) tuple i->p[i][2]
+        x = Base.Cartesian.@ncall $(length(p)) tuple i -> p[i][2]
         list = p[1][1].list
     end
     generate!(expr, LN, inputnames...)
