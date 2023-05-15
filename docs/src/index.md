@@ -29,7 +29,7 @@ input_1 = input(Int64)
 input_2 = input(Ref(0))
 ```
 
-!!! Note "Inputs are never considered initialized"
+!!! note "Inputs are never considered initialized"
     For now, when creating an input from an object, the initial value
     will not be considered _initialized_ before changing its value, or updating it.
 
@@ -120,8 +120,21 @@ updating all children nodes.
 ## Updating several nodes at once
 
 Sometimes, it can be useful to update several inputs synchronously.
-To do so, the users can 
-Users can create sources with more than one node,
+To do so, the users can `push!` to pairs of source and their corresponding
+value/"mutating function".
+
+```jldoctest; output = false
+n1 = input(Int)
+n2 = input(Ref(0))
+map(n1, n2) do x, y
+    println(x + y[])
+end
+push!(Source(n1) => 1, Source(n2) => (x->x[]=2)) # prints "3"
+
+# output
+
+3
+```
 
 
 ## Controlling the flow of the graph

@@ -301,9 +301,9 @@ end
     i3 = input(Bool)
     i1f = filter(i1, i2)
     i1s = select(i1, i3)
-    n2 = map(x->x+1, i1f)
-    n3 = foldl((state, x)-> state + x, 1, i1s)
-    n4 = inlinedmap(+,n2,n3)
+    n2 = map(x -> x + 1, i1f)
+    n3 = foldl((state, x) -> state + x, 1, i1s)
+    n4 = inlinedmap(+, n2, n3)
     n5 = lag(1, n4)
 
     s1 = Source(i1)
