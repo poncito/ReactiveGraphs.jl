@@ -1,4 +1,4 @@
-# Dataflows.jl
+# ReactiveGraphs.jl
 
 This package provides a framework to run computations in a tolological order of the dependency graph.
 It aims to be fast and allocation free, for low-latency applications.
@@ -47,7 +47,7 @@ end
 
 ```@meta
 DocTestSetup = quote
-    using DataFlows
+    using ReactiveGraphs
     input_1 = input(Int64)
     input_2 = input(Ref(0))
     node_1 = map(input_1) do x
@@ -93,7 +93,7 @@ node 2: 11
 
 ```@meta
 DocTestSetup = quote
-    using DataFlows
+    using ReactiveGraphs
 end
 ```
 
@@ -203,7 +203,7 @@ filtered
 ```
 
 ## Comparison with Observables.jl
-`Dataflows.jl` executes nodes in a topological order of the graph, while
+`ReactiveGraphs.jl` executes nodes in a topological order of the graph, while
 `Observables.jl` uses a depth-first ordering (each node calling its children).
 
 ```jldoctest; output = false
@@ -214,7 +214,7 @@ x3 = map(x->println("x3"), x1)
 x4 = map((x, y)->println("x4"), x2, x3)
 x1[] = nothing # prints x2 x4 x3 x4
 
-using DataFlows
+using ReactiveGraphs
 x1 = input(nothing)
 x2 = map(x->println("x2"), x1)
 x3 = map(x->println("x3"), x1)
@@ -234,7 +234,7 @@ x3
 x4
 ```
 
-Also, `Dataflows.jl` is designed for performance, in the case of static graphs,
+Also, `ReactiveGraphs.jl` is designed for performance, in the case of static graphs,
 while Observables is designed for dynamic graphs.
 
 ```julia
@@ -273,7 +273,7 @@ BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
 
 ## Benchmark 
 This library is meant to be fast, and allocation free.
-Here is an example using the main operations of DataFlows.jl.
+Here is an example using the main operations of ReactiveGraphs.jl.
 ```julia
 julia>i1 = input(Int)
       i2 = input(Bool)
@@ -311,6 +311,6 @@ Order = [:function, :type]
 ```
 
 ```@autodocs
-Modules=[DataFlows]
+Modules=[ReactiveGraphs]
 ```
 

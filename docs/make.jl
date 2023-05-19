@@ -1,15 +1,15 @@
 push!(LOAD_PATH, "../src/")
 using Documenter
-using DataFlows
+using ReactiveGraphs
 
-DocMeta.setdocmeta!(DataFlows, :DocTestSetup, :(using DataFlows); recursive = true)
+DocMeta.setdocmeta!(ReactiveGraphs, :DocTestSetup, :(using ReactiveGraphs); recursive = true)
 
 makedocs(
-    modules = [DataFlows],
+    modules = [ReactiveGraphs],
     pages = ["Home" => "index.md"],
-    sitename = "DataFlows.jl",
+    sitename = "ReactiveGraphs.jl",
     authors = "Romain Poncet",
     strict = true,
 )
 
-deploydocs(repo = "github.com/poncito/DataFlows.jl")
+deploydocs(repo = "github.com/poncito/ReactiveGraphs.jl")

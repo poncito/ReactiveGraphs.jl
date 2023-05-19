@@ -1,10 +1,10 @@
-[![CI](https://github.com/poncito/DataFlows.jl/workflows/CI/badge.svg)](https://github.com/poncito/DataFlows.jl/actions?query=workflow%3ACI)
-[![codecov](https://codecov.io/gh/poncito/DataFlows.jl/branch/main/graph/badge.svg?token=DZ7SSICAG6)](https://codecov.io/gh/poncito/DataFlows.jl)
+[![CI](https://github.com/poncito/ReactiveGraphs.jl/workflows/CI/badge.svg)](https://github.com/poncito/ReactiveGraphs.jl/actions?query=workflow%3ACI)
+[![codecov](https://codecov.io/gh/poncito/ReactiveGraphs.jl/branch/main/graph/badge.svg?token=DZ7SSICAG6)](https://codecov.io/gh/poncito/ReactiveGraphs.jl)
 
-[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/DataFlows.jl/stable)
-[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://poncito.github.io/DataFlows.jl/dev)
+[![Stable](https://img.shields.io/badge/docs-stable-blue.svg)](https://poncito.github.io/ReactiveGraphs.jl/stable)
+[![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://poncito.github.io/ReactiveGraphs.jl/dev)
 
-# DataFlows.jl
+# ReactiveGraphs.jl
 
 This package provides a framework to run computations in a topological order of the dependency graph.
 It aims to be fast and allocation free, for low-latency applications.

@@ -1,8 +1,8 @@
 using BenchmarkTools
-using DataFlows
+using ReactiveGraphs
 using Test
 
-import DataFlows: Graph, getoperationtype, Node
+import ReactiveGraphs: Graph, getoperationtype, Node
 
 macro testnoalloc(expr, kws...)
     esc(quote
