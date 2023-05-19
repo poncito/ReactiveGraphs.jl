@@ -1,4 +1,4 @@
-module DataFlows
+module ReactiveGraphs
 
 export input
 export Source

@@ -1,5 +1,5 @@
 using Revise
-using DataFlows
+using ReactiveGraphs
 using BenchmarkTools
 
 i1 = input(Int)
@@ -21,4 +21,3 @@ s3[] = true
 v = 1
 @benchmark setindex!($s1, $v)
 
-# DataFlows.debugsource(s1)
