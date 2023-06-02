@@ -83,8 +83,8 @@ function generate!(
 ) where {name,parentnames,X,Next}
     generate!(expr, Next, inputnames...)
     e = generate(inputnames, name, parentnames, X)
-    push!(expr.args, :(on_update_node!(monitor, $(Meta.quot(name)))))
     append!(expr.args, e.args)
+    push!(expr.args, :(on_update_node!(monitor, $(Meta.quot(name)))))
     expr
 end
 
