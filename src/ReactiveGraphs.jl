@@ -38,6 +38,7 @@ getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
 
 include("graph.jl")
 include("operations.jl")
+include("monitor.jl")
 include("compilation.jl")
 
 genname(::Nothing) = gensym()
