@@ -314,3 +314,25 @@ end
     push!(s3, true)
     @testnoalloc push!($s1, 1)
 end
+
+@testset "PerformanceTrackers" begin
+    i1 = input(Int; name="input1")
+    i2 = input(Int; name="input2")
+    n1 = map(x->2x, i1)
+    n2 = map(+, n1, i2)
+    s1 = Source(i1)
+    s2 = Source(i2)
+    push!(s1, 1)
+    push!(s2, 2)
+    tracker = PerformanceGraphTracker()
+    push!(tracker, s1, 2)
+    push!(tracker, s2, 2)
+    push!(tracker, s1 => 3, s2 => 3)
+    triggers = gettrackingtriggers(tracker)
+    nodes = gettrackingnodes(tracker)
+    @test length(triggers) == 4
+    @test map(x->x.id, triggers) == [1,2,3,3]
+    @test length(nodes) == 3*4
+    @test map(x->x.id, nodes) == [i for i in 1:3 for _ in 1:4]
+    @test map(x->x.bytes_allocated, nodes) == [0 for i in 1:3 for _ in 1:4]
+end

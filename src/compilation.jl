@@ -53,9 +53,9 @@ getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
 getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
 
 @inline Base.push!(src::Source, x) = push!(src => x)
-@inline Base.push!(monitor::AbstractMonitor, src::Source, x) = push!(monitor, src => x)
-@inline Base.push!(p::Pair{<:Source,<:Any}...) = push!(NullMonitor(), p...)
-@generated function Base.push!(monitor::AbstractMonitor, p::Pair{<:Source,<:Any}...)
+@inline Base.push!(monitor::AbstractGraphTracker, src::Source, x) = push!(monitor, src => x)
+@inline Base.push!(p::Pair{<:Source,<:Any}...) = push!(NullGraphTracker(), p...)
+@generated function Base.push!(monitor::AbstractGraphTracker, p::Pair{<:Source,<:Any}...)
     src_types = p .|> fieldtypes .|> first
     inputnames = getinputname.(src_types)
     listtypes = getlisttype.(src_types)
