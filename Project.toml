@@ -3,5 +3,9 @@ uuid = "e49d8811-4385-4fad-be34-8522254608f3"
 authors = ["Romain Poncet <romain.pct@gmail.com>"]
 version = "0.1.0"
 
+[deps]
+Dates = "ade2ca70-3891-5945-98fb-dc099432e06a"
+UnixTimes = "ab1a18e7-b408-4913-896c-624bb82ed7f4"
+
 [compat]
 julia = "1.6"

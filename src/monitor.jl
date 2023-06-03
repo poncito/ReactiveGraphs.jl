@@ -9,33 +9,33 @@ on_update_stop!(::AbstractMonitor) = nothing
 
 struct NodeStatistic
     name::Symbol
-    id::UInt64
-    elapsed_time::UInt64
+    id::Int64
+    elapsed_time::Int64
     bytes_allocated::Int
 end
 
 struct RootStatistic
     name::Symbol
-    id::UInt64
+    id::Int64
 end
 
 mutable struct PerformanceMonitor <: AbstractMonitor
     @tryconst nodestatistics::Vector{NodeStatistic}
     @tryconst rootstatistics::Vector{RootStatistic}
-    currentid::UInt64
-    lasttime::UInt64
+    currentid::Int64
+    lasttime::Int64
     @tryconst total_bytes_allocated::Base.RefValue{Int64}
 end
 
 PerformanceMonitor() = PerformanceMonitor(
     NodeStatistic[],
     RootStatistic[],
-    zero(UInt64),
-    zero(UInt64),
+    zero(Int64),
+    zero(Int64),
     Ref(zero(Int64)),
 )
 
-gettime(::PerformanceMonitor) = UInt64(0)
+gettime(::PerformanceMonitor) = Dates.value(unix_now())
 getelapsedtime(pm::PerformanceMonitor) = gettime(pm) - pm.lasttime
 settime!(pm::PerformanceMonitor) = pm.lasttime = gettime(pm)
 
