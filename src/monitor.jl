@@ -23,7 +23,7 @@ mutable struct PerformanceMonitor <: AbstractMonitor
     @tryconst nodestatistics::Vector{NodeStatistic}
     @tryconst rootstatistics::Vector{RootStatistic}
     currentid::Int64
-    lasttime::Int64
+    lasttime::UInt64
     @tryconst total_bytes_allocated::Base.RefValue{Int64}
 end
 
@@ -31,12 +31,12 @@ PerformanceMonitor() = PerformanceMonitor(
     NodeStatistic[],
     RootStatistic[],
     zero(Int64),
-    zero(Int64),
+    zero(UInt64),
     Ref(zero(Int64)),
 )
 
-gettime(::PerformanceMonitor) = Dates.value(unix_now())
-getelapsedtime(pm::PerformanceMonitor) = gettime(pm) - pm.lasttime
+gettime(::PerformanceMonitor) = time_ns()
+getelapsedtime(pm::PerformanceMonitor) = reinterpret(Int64, gettime(pm) - pm.lasttime)
 settime!(pm::PerformanceMonitor) = pm.lasttime = gettime(pm)
 
 setallocatedbytes!(pm::PerformanceMonitor) = Base.gc_bytes(pm.total_bytes_allocated)

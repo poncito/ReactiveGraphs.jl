@@ -1,8 +1,5 @@
 module ReactiveGraphs
 
-using Dates
-using UnixTimes
-
 export input
 export Source
 export constant
