@@ -47,7 +47,6 @@ function getallocatedbytes!(pm::PerformanceGraphTracker)
     old_total_bytes_allocated = pm.total_bytes_allocated[]
     Base.gc_bytes(pm.total_bytes_allocated)
     pm.total_bytes_allocated[] - old_total_bytes_allocated
-    0
 end
 
 function on_update_start!(pm::PerformanceGraphTracker, names)
