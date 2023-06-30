@@ -65,16 +65,10 @@ function on_update_node!(pm::PerformanceGraphTracker, name)
     elapsed_time = getelapsedtime(pm)
     bytes_allocated = getallocatedbytes!(pm)
 
-    rs = TrackingNode(
-        name,
-        pm.currentid,
-        elapsed_time,
-        bytes_allocated,
-    )
+    rs = TrackingNode(name, pm.currentid, elapsed_time, bytes_allocated)
     push!(pm.trackingnodes, rs)
 
     setallocatedbytes!(pm)
     settime!(pm)
     nothing
 end
-
