@@ -20,4 +20,3 @@ s2[] = true
 s3[] = true
 v = 1
 @benchmark setindex!($s1, $v)
-

@@ -84,7 +84,10 @@ function generate(
     push!(expr.args, :($updated_s = $updated))
     push!(expr.args, :($nodename_s = getnode(list, $(TypeSymbol(name)))))
     if updated
-        push!(expr.args, :($(Expr(:call, :update!, nodename_s, Expr(:ref, :x, i)))))
+        push!(
+            expr.args,
+            :($(Expr(:call, :update!, nodename_s, Expr(:ref, Expr(:ref, :p, i), 2)))),
+        )
     end
     push!(expr.args, :($initialized_s = $(updated ? true : :(isinitialized($nodename_s)))))
     expr
