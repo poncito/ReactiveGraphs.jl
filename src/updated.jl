@@ -22,12 +22,7 @@ end
     nothing
 end
 
-function generate(
-    ::Any,
-    name::Symbol,
-    parentnames::NTuple{<:Any,Symbol},
-    ::Type{<:Updated},
-)
+function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Updated})
     @assert length(parentnames) == 1
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)

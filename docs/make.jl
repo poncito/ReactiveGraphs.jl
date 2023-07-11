@@ -2,7 +2,12 @@ push!(LOAD_PATH, "../src/")
 using Documenter
 using ReactiveGraphs
 
-DocMeta.setdocmeta!(ReactiveGraphs, :DocTestSetup, :(using ReactiveGraphs); recursive = true)
+DocMeta.setdocmeta!(
+    ReactiveGraphs,
+    :DocTestSetup,
+    :(using ReactiveGraphs);
+    recursive = true,
+)
 
 makedocs(
     modules = [ReactiveGraphs],
