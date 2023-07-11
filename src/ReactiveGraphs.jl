@@ -7,6 +7,7 @@ export inlinedmap
 export quiet
 export select
 export lag
+export updated
 
 macro tryinline(e)
     @static if VERSION >= v"1.8"
@@ -53,6 +54,7 @@ include("selecter.jl")
 include("constant.jl")
 include("quiet.jl")
 include("lag.jl")
+include("updated.jl")
 
 _splittuple(T::Type{<:Any}) = T, Nothing
 _splittuple(::Type{Tuple{T1,T2}}) where {T1,T2} = T1, T2
