@@ -295,6 +295,21 @@ end
     @test c == 1:8
 end
 
+@testset "updated" begin
+    n1 = input(Int)
+    n2 = filter(iseven, n1)
+    n3 = updated(n2)
+    c1 = sink(identity, n3)
+    c2 = sink((x, y) -> x, n3, n1)
+
+    s = Source(n1)
+    for i = 1:4
+        push!(s, i)
+    end
+    @test c1 == [true, true]
+    @test c2 == [false, true, false, true]
+end
+
 @testset "no allocation" begin
     i1 = input(Int)
     i2 = input(Bool)
