@@ -52,9 +52,10 @@ end
 getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
 getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
 
-Base.push!(src::Source, x) = push!(src => x)
-
-@generated function Base.push!(p::Pair{<:Source,<:Any}...)
+@inline Base.push!(src::Source, x) = push!(src => x)
+@inline Base.push!(monitor::AbstractGraphTracker, src::Source, x) = push!(monitor, src => x)
+@inline Base.push!(p::Pair{<:Source,<:Any}...) = push!(NullGraphTracker(), p...)
+@generated function Base.push!(monitor::AbstractGraphTracker, p::Pair{<:Source,<:Any}...)
     src_types = p .|> fieldtypes .|> first
     inputnames = getinputname.(src_types)
     listtypes = getlisttype.(src_types)
@@ -65,10 +66,11 @@ Base.push!(src::Source, x) = push!(src => x)
     LN = first(listtypes)
 
     expr = quote
-        x = Base.Cartesian.@ncall $(length(p)) tuple i -> p[i][2]
+        on_update_start!(monitor, $inputnames)
         list = p[1][1].list
     end
     generate!(expr, LN, inputnames...)
+    push!(expr.args, :(on_update_stop!(monitor)))
     push!(expr.args, nothing)
     expr
 end
@@ -82,6 +84,7 @@ function generate!(
     generate!(expr, Next, inputnames...)
     e = generate(inputnames, name, parentnames, X)
     append!(expr.args, e.args)
+    push!(expr.args, :(on_update_node!(monitor, $(Meta.quot(name)))))
     expr
 end
 
