@@ -1,107 +1,73 @@
-struct Root end
-
-struct ListNode{name,parentnames,X,Next}
-    x::X
-    next::Next
-    function ListNode(
-        name::Symbol,
-        parentnames::NTuple{<:Any,Symbol},
-        x,
-        next::Union{Root,ListNode},
-    )
-        new{name,parentnames,typeof(x),typeof(next)}(x, next)
-    end
+mutable struct Node
+    ref::Base.RefValue{Vector{Node}}
+    @tryconst name::Symbol
+    @tryconst parentnames::Vector{Symbol}
+    @tryconst operation::Operation
 end
 
-getname(::TypeOrValue{ListNode{name}}) where {name} = name
-getparentnames(::TypeOrValue{ListNode{name,parentnames}}) where {name,parentnames} =
-    parentnames
-getelementtype(::TypeOrValue{ListNode{name,parentnames,X}}) where {name,parentnames,X} = X
-getelement(n::ListNode) = n.x
-getnext(n::ListNode) = n.next
-Base.eltype(x::TypeOrValue{<:ListNode}) = eltype(getelementtype(x))
-
-mutable struct Graph
-    last::Ref{Union{Root,ListNode}}
+# todo: make sure name is unique
+function Node(name::Symbol, op::Operation, parents::Node...)
+    ref = mergegraphs!(parents...)
+    parentnames = [a.name for a in parents]
+    node = Node(ref, name, parentnames, op)
+    push!(ref[].nodes, node)
+    node
 end
 
-Graph() = Graph(Ref{Union{Root,ListNode}}(Root()))
-
-Base.:(==)(g1::Graph, g2::Graph) = g1.last == g2.last
-
-Base.getindex(g::Graph) = g.last[]
-function Base.setindex!(g::Graph, x::Union{Root,ListNode})
-    g.last[] = x
-    g
-end
-
-Base.map(f::Function, g::Graph) = map(f, g.last[])
-Base.map(::Function, ::Root) = nothing
-function Base.map(f::Function, n::ListNode)
-    map(f, n.next)
-    f(getname(n), getparentnames(n), n.x)
-end
-
-function Base.push!(graph::Graph, name, parentnames, x)
-    graph[] = ListNode(name, parentnames, x, graph[])
-    graph
-end
-
-Base.merge!(graph::Graph) = graph
-function Base.merge!(graph1::Graph, graph2::Graph, graphs...)
-    if graph1 != graph2
-        map(graph2) do name, parentnames, x
-            push!(graph1, name, parentnames, x)
-        end
-        graph2.last = graph1.last
-    end
-    merge!(graph1, graphs...)
-end
-
-getnode(graph::Graph, s::TypeSymbol) = getnode(graph[], s)
-getnode(::Root, s::TypeSymbol) =
-    throw(ErrorException("symbol $(getsymbol(s)) not found in graph"))
-function getnode(x::ListNode, v::TypeSymbol)
-    if getname(x) == getsymbol(v)
-        x
-    else
-        getnode(x.next, v)
-    end
-end
-
-"""
-    Node{name}
-
-Objects of type `Node` correspond to the nodes of the computational graph.
-Each node is identified by a uniquely generated name `name`.
-"""
-struct Node{name}
-    graph::Graph
-    Node(name::Symbol, graph::Graph) = new{name}(graph)
-end
+Base.eltype(node::Node) = eltype(node.operation)
 
 function Base.show(io::IO, node::Node)
-    name = getname(node)
+    name = node.name
     type = eltype(node)
     print(io, "Node($name,$type)")
 end
 
-Base.eltype(node::Node) = node |> getnode |> eltype
-getname(::TypeOrValue{Node{name}}) where {name} = name
-getgraph(node::Node) = node.graph
-getnode(node::Node) = getnode(getgraph(node), TypeSymbol(getname(node)))
-
-function Node(name::Symbol, x::X, parents::Node...) where {X}
-    graph = if isempty(parents)
-        Graph()
-    else
-        merge!((n.graph for n in parents)...) # return Root() if empty
+mergegraphs!() = Graph(Node[], nothing)
+mergegraphs!(node::Node) = node.ref
+function mergegraphs!(node1::Node, node2::Node, nodes::Node...)
+    if node1.ref != node2.ref
+        append!(node1.ref[], node2.ref[])
+        node2.ref = node1.ref
     end
-    parentnames = Tuple(getname(a) for a in parents)
-    push!(graph, name, parentnames, x)
-    Node(name, graph)
+    mergegraphs!(node1, nodes...)
 end
 
-update!(node, args...) = update!(getelement(node), args...)
-isinitialized(node, args...) = isinitialized(getelement(node), args...)
-(node::Node)(args...) = getelement(node)(args...)
+# """
+#     Node{name}
+
+# Objects of type `Node` correspond to the nodes of the computational graph.
+# Each node is identified by a uniquely generated name `name`.
+# """
+# struct Node{name}
+#     graph::GraphRef
+#     Node(name::Symbol, graph::GraphRef) = new{name}(graph)
+# end
+
+# function Base.show(io::IO, node::Node)
+#     name = getname(node)
+#     type = eltype(node)
+#     print(io, "Node($name,$type)")
+# end
+
+# Base.eltype(node::Node) = node |> getedge |> eltype
+# getname(::TypeOrValue{Node{name}}) where {name} = name
+# getgraph(node::Node) = node.graph
+# getedge(node::Node) = getedge(getgraph(node), TypeSymbol(getname(node)))
+
+# function Node(name::Symbol, op::Op, parents::Node...) where {Op <: Operation}
+#     graph = if isempty(parents)
+#         GraphRef()
+#     else
+#         merge!((n.graph for n in parents)...) # return Root() if empty
+#     end
+#     parentnames = Tuple(getname(a) for a in parents)
+#     push!(graph, name, parentnames, op)
+#     Node(name, graph)
+# end
+
+# update!(node, args...) = update!(getedge(node), args...)
+# # isinitialized(node, args...) = isinitialized(getedge(node), args...)
+# (node::Node)(args...) = getedge(node)(args...)
+
+# @inline getvalue(::Graph, element::Operation) = getvalue(element)
+# getoperationtype(node::Node) = getedge(node) |> getoperationtype

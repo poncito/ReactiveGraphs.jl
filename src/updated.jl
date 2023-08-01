@@ -32,10 +32,9 @@ function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type
     quote
         $initialized_s = $condition_initialized
         $updated_s = $condition_initialized & $condition_updated
-        $nodename_s = getnode(list, $(TypeSymbol(name)))
+        $nodename_s = getedge(list, $(TypeSymbol(name)))
         $(Expr(:call, :update!, nodename_s, updated_s))
     end
 end
 
 @inline getvalue(x::Updated) = x.updated
-@inline getvalue(::ListNode, element::Updated) = getvalue(element)

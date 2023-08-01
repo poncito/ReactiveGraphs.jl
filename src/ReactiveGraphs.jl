@@ -34,21 +34,20 @@ end
 
 TypeOrValue{X} = Union{X,Type{<:X}}
 
-struct TypeSymbol{x}
-    TypeSymbol(x::Symbol) = new{x}()
-end
+# struct TypeSymbol{x}
+#     TypeSymbol(x::Symbol) = new{x}()
+# end
 
-getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
+# getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
 
-include("graph.jl")
 include("operations.jl")
+include("graph.jl")
 include("trackers.jl")
 include("compilation.jl")
 
 genname(::Nothing) = gensym()
 genname(s::Symbol) = gensym(s)
 genname(s::AbstractString) = gensym(string(s))
-getoperationtype(node::Node) = getnode(node) |> getelement |> eltype
 
 include("input.jl")
 include("map.jl")

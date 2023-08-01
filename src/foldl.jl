@@ -46,7 +46,7 @@ function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type
     nodename_s = Symbol(:node, name)
     quote
         $updated_s = if $condition_initialized & $condition_updated
-            $nodename_s = getnode(list, $(TypeSymbol(name)))
+            $nodename_s = getelement(list, $(TypeSymbol(name)))
             $(Expr(:call, :update!, nodename_s, args...))
             true
         else

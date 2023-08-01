@@ -44,9 +44,10 @@ function generate(
     end
 end
 
-@generated function getvalue(node::ListNode, imap::InlinedMap)
+@generated function getvalue(graph::CompiledGraph, name::Symbol, imap::InlinedMap)
+    node = graph[name]
     names = getparentnames(node)
     quote
-        Base.@ncall $(length(names)) imap.f i -> (getvalue(node, TypeSymbol($names[i])))
+        Base.@ncall $(length(names)) imap.f i -> (getvalue(graph, $(Meta.quot(names[i]))))
     end
 end

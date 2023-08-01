@@ -1,12 +1,43 @@
-# todo: ensure that the node exists, and is an input
-struct Source{inputname,T,LN<:ListNode}
-    list::LN
-    function Source(listnode::LN, inputname::Symbol) where {LN<:ListNode}
-        node = getnode(listnode, TypeSymbol(inputname))
-        T = eltype(node)
-        new{inputname,T,LN}(listnode)
+struct CompiledNode{name,parentnames,Op<:Operation}
+    operation::Op
+    function CompiledNode(name::Symbol, parentnames::NTuple{N,Symbol}, operation::Operation) where {N}
+        new{name, parentnames, typeof(operation)}(operation)
     end
 end
+
+getname(::TypeOrValue{CompiledNode{name}}) where {name} = name
+getparentnames(::TypeOrValue{CompiledNode{name,parentnames}}) where {name,parentnames} =
+    parentnames
+getoperationtype(::TypeOrValue{CompiledNode{name,parentnames,Op}}) where {name,parentnames,Op} = Op
+getoperation(n::CompiledNode) = n.operation
+
+# function CompiledNode(node::Node)
+#     CompiledNode(node.name, Tuple(node.parentnames), node.operation)
+# end
+
+struct CompiledGraph{N,T<:NTuple{N,CompiledNode},Tr<:AbstractGraphTracker}
+    nodes::T
+    tracker::Tr
+end
+
+# CompiledGraph(node::Node) = CompiledGraph(node.ref[])
+# function CompiledGraph(nodes::Vector{Node})
+#     Tuple(CompiledNode(n) for n in nodes) |> CompiledGraph
+# end
+
+nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
+
+@generated function Base.getindex(g::CompiledGraph, s::Symbol)
+    for (i, nodetype) in nodetypes(g) |> enumerate
+        getname(nodetype) == s && return :(g.nodes[$i])
+    end
+    throw(ErrorException("symbol $s not found in graph"))
+end
+
+struct Source{inputname,T} end
+
+Base.eltype(::TypeOrValue{Source{inputname,T}}) where {inputname,T} = T
+getinputname(::TypeOrValue{Source{inputname,T}}) where {inputname,T} = inputname
 
 """
     Source(::Node)
@@ -43,55 +74,57 @@ julia> i1 = input(Int)
 37
 ```
 """
-Source(node::Node) = Source(getgraph(node)[], getname(node))
-
-function Base.show(io::IO, s::Source{inputname,T}) where {inputname,T}
-    print(io, "Source($inputname, $T)")
+function Source(node::Node)
+    @assert node.operation isa Input
+    new{node.name, eltype(node.operation)}()
 end
 
-getlisttype(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = LN
-getinputname(::TypeOrValue{Source{inputname,T,LN}}) where {inputname,T,LN} = inputname
+function compile(inputs::Node...; tracker::AbstractGraphTracker=NullGraphTracker())
+    @assert !isempty(inputs) 
+    sources = Source.(inputs)
 
-@inline Base.push!(src::Source, x) = push!(src => x)
-@inline Base.push!(monitor::AbstractGraphTracker, src::Source, x) = push!(monitor, src => x)
-@inline Base.push!(p::Pair{<:Source,<:Any}...) = push!(NullGraphTracker(), p...)
-@generated function Base.push!(monitor::AbstractGraphTracker, p::Pair{<:Source,<:Any}...)
-    src_types = p .|> fieldtypes .|> first
-    inputnames = getinputname.(src_types)
-    listtypes = getlisttype.(src_types)
+    @assert allequal(map(x->x.ref, inputs))
+    nodes = inputs[1].ref[]
+    compilednodes = Tuple(CompiledNode(node.name, Tuple(node.parentnames), node.operation) for node in nodes)
+    compiledgraph = CompiledGraph(compilednodes, tracker)
 
-    if !allequal(listtypes)
-        throw(ErrorException("nodes do not belong to the same graph"))
-    end
-    LN = first(listtypes)
+    compiledgraph, sources...
+end
 
+@inline Base.push!(graph::CompiledGraph, src::Source, x) = push!(graph, src => x)
+@generated function Base.push!(graph::CompiledGraph, p::Pair{<:Source,<:Any}...)
+    sources = p .|> fieldtypes .|> first
+    generate(graph, sources...)
+end
+
+function generate(graph::Type{<:CompiledGraph}, sources::Type{<:Source}...)
+    inputnames = getinputname.(sources)
     expr = quote
-        on_update_start!(monitor, $inputnames)
-        list = p[1][1].list
+        on_update_start!(graph.monitor, $inputnames)
     end
-    generate!(expr, LN, inputnames...)
-    push!(expr.args, :(on_update_stop!(monitor)))
+    for compilednodetype in nodetypes(graph)
+        generate!(expr, compilednodetype, inputnames...)
+    end
+    push!(expr.args, :(on_update_stop!(graph.monitor)))
     push!(expr.args, nothing)
     expr
 end
 
-generate!(::Expr, ::Type{Root}, ::Symbol...) = nothing
 function generate!(
     expr::Expr,
-    ::Type{ListNode{name,parentnames,X,Next}},
+    ::Type{CompiledNode{name,parentnames,Op}},
     inputnames::Symbol...,
-) where {name,parentnames,X,Next}
-    generate!(expr, Next, inputnames...)
-    e = generate(inputnames, name, parentnames, X)
+) where {name,parentnames,Op}
+    e = generate(inputnames, name, parentnames, Op)
     append!(expr.args, e.args)
-    push!(expr.args, :(on_update_node!(monitor, $(Meta.quot(name)))))
+    push!(expr.args, :(on_update_node!(graph.monitor, $(Meta.quot(name)))))
     expr
 end
 
-# getvalue(list::ListNode, name::Symbol) = getnode(list, name) |> getvalue
-getvalue(list::ListNode, v::TypeSymbol) = getnode(list, v) |> getvalue
-getvalue(node::ListNode) = getvalue(node, getelement(node))
-
-function debugsource(src::Source{inputnames,LN}) where {inputnames,LN}
+function debugsource(graph::CompiledGraph, src::Source...)
+    inputnames = getinputname.(src_types)
     generate!(Expr(:block), LN, inputnames...)
 end
+
+getvalue(graph::CompiledGraph, name::Symbol) = getvalue(graph, name, graph[name].operation)
+getvalue(graph::CompiledGraph, name::Symbol, op::Operation) = getvalue(op)
