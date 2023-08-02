@@ -38,8 +38,6 @@ struct TypeSymbol{x}
     TypeSymbol(x::Symbol) = new{x}()
 end
 
-getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
-
 include("operations.jl")
 include("graph.jl")
 include("trackers.jl")
