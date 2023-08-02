@@ -17,6 +17,7 @@ struct CompiledGraph{N,T<:NTuple{N,CompiledNode},Tr<:AbstractGraphTracker}
 end
 
 nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
+gettrackingnodes(g::CompiledGraph) = gettrackingnodes(g.tracker)
 
 @generated function Base.getindex(g::CompiledGraph{N}, ::TypeSymbol{name}) where {N, name}
     for (i, node) in nodetypes(g) |> enumerate
@@ -108,7 +109,7 @@ end
 function generate(graph::Type{<:CompiledGraph}, sources::Type{<:Source}...)
     inputnames = getinputname.(sources)
     expr = quote
-        on_update_start!(graph.tracker, $(inputnames))
+        on_update_start!(graph.tracker)
     end
     for compilednodetype in nodetypes(graph)
         generate!(expr, compilednodetype, inputnames...)
@@ -125,7 +126,7 @@ function generate!(
 ) where {name,parentnames,Op}
     e = generate(inputnames, name, parentnames, Op)
     append!(expr.args, e.args)
-    push!(expr.args, :(on_update_node!(graph.tracker, $(Meta.quot(name)))))
+    push!(expr.args, :(on_update_node!(graph.tracker, $(Meta.quot(name)), $(name in inputnames))))
     expr
 end
 

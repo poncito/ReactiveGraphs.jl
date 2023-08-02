@@ -315,24 +315,22 @@ end
     @testnoalloc push!($g, $s1, 1)
 end
 
-# @testset "PerformanceTrackers" begin
-#     i1 = input(Int; name = "input1")
-#     i2 = input(Int; name = "input2")
-#     n1 = map(x -> 2x, i1)
-#     n2 = map(+, n1, i2)
-#     s1 = Source(i1)
-#     s2 = Source(i2)
-#     push!(s1, 1)
-#     push!(s2, 2)
-#     tracker = PerformanceGraphTracker()
-#     push!(tracker, s1, 2)
-#     push!(tracker, s2, 2)
-#     push!(tracker, s1 => 3, s2 => 3)
-#     triggers = gettrackingtriggers(tracker)
-#     nodes = gettrackingnodes(tracker)
-#     @test length(triggers) == 4
-#     @test map(x -> x.id, triggers) == [1, 2, 3, 3]
-#     @test length(nodes) == 3 * 4
-#     @test map(x -> x.id, nodes) == [i for i = 1:3 for _ = 1:4]
-#     @test map(x -> x.bytes_allocated, nodes) == [0 for i = 1:3 for _ = 1:4]
-# end
+@testset "PerformanceTrackers" begin
+    i1 = input(Int; name = "input1")
+    i2 = input(Int; name = "input2")
+    n1 = map(x -> 2x, i1)
+    n2 = map(+, n1, i2)
+
+    g, s1, s2 = compile(i1, i2)
+    push!(g, s1, 1)
+    push!(g, s2, 2)
+    g, s1, s2 = compile(i1, i2; tracker=PerformanceGraphTracker())
+    push!(g, s1, 2)
+    push!(g, s2, 2)
+    push!(g, s1 => 3, s2 => 3)
+    nodes = gettrackingnodes(g)
+    @test length(nodes) == 3 * 4
+    @test map(x -> x.id, nodes) == [i for i = 1:3 for _ = 1:4]
+    @test map(x -> x.bytes_allocated, nodes) == [0 for i = 1:3 for _ = 1:4]
+    @test map(x -> x.isinput, nodes) == [(i in x) for x in [(1,), (3,), (1,3)] for i = 1:4]
+end
