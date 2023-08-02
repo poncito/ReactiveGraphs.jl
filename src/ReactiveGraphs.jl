@@ -1,7 +1,7 @@
 module ReactiveGraphs
 
+export compile
 export input
-export Source
 export constant
 export inlinedmap
 export quiet
@@ -11,7 +11,6 @@ export updated
 
 export PerformanceGraphTracker
 export gettrackingnodes, gettrackingtriggers
-export compile
 
 macro tryinline(e)
     @static if VERSION >= v"1.8"

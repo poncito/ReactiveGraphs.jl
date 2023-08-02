@@ -306,10 +306,8 @@ end
     n3 = foldl((state, x) -> state + x, 1, i1s)
     n4 = inlinedmap(+, n2, n3)
     n5 = lag(1, n4)
+    n6 = updated(n5)
 
-    s1 = Source(i1)
-    s2 = Source(i2)
-    s3 = Source(i3)
     g, s1, s2, s3 = compile(i1, i2, i3)
     push!(g, s1, 1)
     push!(g, s2, true)

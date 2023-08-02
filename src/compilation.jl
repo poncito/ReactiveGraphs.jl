@@ -11,19 +11,10 @@ getparentnames(::TypeOrValue{CompiledNode{name,parentnames}}) where {name,parent
 getoperationtype(::TypeOrValue{CompiledNode{name,parentnames,Op}}) where {name,parentnames,Op} = Op
 getoperation(n::CompiledNode) = n.operation
 
-# function CompiledNode(node::Node)
-#     CompiledNode(node.name, Tuple(node.parentnames), node.operation)
-# end
-
 struct CompiledGraph{N,T<:NTuple{N,CompiledNode},Tr<:AbstractGraphTracker}
     nodes::T
     tracker::Tr
 end
-
-# CompiledGraph(node::Node) = CompiledGraph(node.ref[])
-# function CompiledGraph(nodes::Vector{Node})
-#     Tuple(CompiledNode(n) for n in nodes) |> CompiledGraph
-# end
 
 nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
 
@@ -34,51 +25,68 @@ nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
     throw(ErrorException("symbol $name not found in graph $g"))
 end
 
+"""
+    Source{inputname,T}
+
+An empty object that indexes an `Input` node within a `CompiledGraph`.
+"""
 struct Source{inputname,T} end
 
 Base.eltype(::TypeOrValue{Source{inputname,T}}) where {inputname,T} = T
 getinputname(::TypeOrValue{Source{inputname,T}}) where {inputname,T} = inputname
 
-"""
-    Source(::Node)
+function Source(node::Node)
+    @assert node.operation isa Input
+    Source{node.name, eltype(node.operation)}()
+end
 
-Transforms an input node into a `Source`, which is a type stable version of the former.
-This type is used to update the roots of the graph with `Base.push!`.
-The input objects are not used directly, for performance considerations.
+"""
+    compile(inputs::Node....; tracker::AbstractGraphTracker=NullGraphTracker)
+
+This library does not optimize for the construction of the graph, but once
+built, updating it should be as fast as possible, and allocation free.
+
+In practice, the user first creates a computation graph iteratively, by creating nodes.
+Then, in order to generate efficient methods to update such a graph, this library
+requires the user to "compile" those nodes.
+This simply amounts to build an object that whose type completely encodes the topology of the graph.
+This way, it is possible to generate update methods based on the type of graph object, which
+is quite idiomatic in Julia.
+
+This conversion from a collection of node, to a strongly typed graph is done by this function.
+It needs to be called on all the inputs of the graph.
+The methods returns:
+- a compiled graph object
+- a `Source` for each of the inputs
 
 ```jldoctest
 julia> i = input(String)
        map(println, i)
-       s = Source(i)
-       push!(s, "example")
+       g, s = compile(i)
+       push!(g, s, "example")
 example
 
 julia> i = input(Ref(0))
        map(x->println(x[]), i)
-       s = Source(i)
-       push!(s, ref -> ref[] = 123)
+       g, s = compile(i)
+       push!(g, s, ref -> ref[] = 123)
 123
 ```
 
-Sources can also be used simultaneously,
+It is also possible to update several inputs simultaneously
 
 ```jldoctest
 julia> i1 = input(Int)
        i2 = input(Int)
        m = map(+, i1, i2)
        map(print, m)
-       s1 = Source(i1)
-       s2 = Source(i2)
-       push!(s1 => 1, s2 => 2)
-       push!(s1 => 3, s2 => 4)
+       g, s1, s2 = compile(i1, i2)
+       push!(g, s1 => 1, s2 => 2)
+       push!(g, s1 => 3, s2 => 4)
 37
 ```
-"""
-function Source(node::Node)
-    @assert node.operation isa Input
-    Source{node.name, eltype(node.operation)}()
-end
 
+"""
 function compile(inputs::Node...; tracker::AbstractGraphTracker=NullGraphTracker())
     @assert !isempty(inputs) 
     sources = Source.(inputs)
@@ -130,4 +138,4 @@ function getvalue(graph::CompiledGraph, name::TypeSymbol)
     node = graph[name]
     getvalue(graph, node, getoperation(node))
 end
-getvalue(::CompiledGraph, ::CompiledNode, op::Operation) = getvalue(op) # specific implementations should dispatch on this method
+getvalue(::CompiledGraph, ::CompiledNode, op::Operation) = getvalue(op) # default implementaion. Concrete operations should dispatch on this method
