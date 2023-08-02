@@ -27,11 +27,11 @@ end
 
 nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
 
-@generated function Base.getindex(g::CompiledGraph, s::Symbol)
-    for (i, nodetype) in nodetypes(g) |> enumerate
-        getname(nodetype) == s && return :(g.nodes[$i])
+@generated function Base.getindex(g::CompiledGraph{N}, ::TypeSymbol{name}) where {N, name}
+    for (i, node) in nodetypes(g) |> enumerate
+        getname(node) == name && return :(g.nodes[$i])
     end
-    throw(ErrorException("symbol $s not found in graph"))
+    throw(ErrorException("symbol $name not found in graph $g"))
 end
 
 struct Source{inputname,T} end
@@ -76,15 +76,15 @@ julia> i1 = input(Int)
 """
 function Source(node::Node)
     @assert node.operation isa Input
-    new{node.name, eltype(node.operation)}()
+    Source{node.name, eltype(node.operation)}()
 end
 
 function compile(inputs::Node...; tracker::AbstractGraphTracker=NullGraphTracker())
     @assert !isempty(inputs) 
     sources = Source.(inputs)
 
-    @assert allequal(map(x->x.ref, inputs))
-    nodes = inputs[1].ref[]
+    @assert allequal(map(x->x.graph.ref, inputs))
+    nodes = inputs[1].graph.ref[]
     compilednodes = Tuple(CompiledNode(node.name, Tuple(node.parentnames), node.operation) for node in nodes)
     compiledgraph = CompiledGraph(compilednodes, tracker)
 
@@ -100,12 +100,12 @@ end
 function generate(graph::Type{<:CompiledGraph}, sources::Type{<:Source}...)
     inputnames = getinputname.(sources)
     expr = quote
-        on_update_start!(graph.monitor, $inputnames)
+        on_update_start!(graph.tracker, $(inputnames))
     end
     for compilednodetype in nodetypes(graph)
         generate!(expr, compilednodetype, inputnames...)
     end
-    push!(expr.args, :(on_update_stop!(graph.monitor)))
+    push!(expr.args, :(on_update_stop!(graph.tracker)))
     push!(expr.args, nothing)
     expr
 end
@@ -117,14 +117,17 @@ function generate!(
 ) where {name,parentnames,Op}
     e = generate(inputnames, name, parentnames, Op)
     append!(expr.args, e.args)
-    push!(expr.args, :(on_update_node!(graph.monitor, $(Meta.quot(name)))))
+    push!(expr.args, :(on_update_node!(graph.tracker, $(Meta.quot(name)))))
     expr
 end
 
-function debugsource(graph::CompiledGraph, src::Source...)
-    inputnames = getinputname.(src_types)
-    generate!(Expr(:block), LN, inputnames...)
+function debugsource(graph::CompiledGraph, sources::Source...)
+    generate(graph, sources...)
 end
 
-getvalue(graph::CompiledGraph, name::Symbol) = getvalue(graph, name, graph[name].operation)
-getvalue(graph::CompiledGraph, name::Symbol, op::Operation) = getvalue(op)
+getoperation(graph::CompiledGraph, name::TypeSymbol) = graph[name].operation
+function getvalue(graph::CompiledGraph, name::TypeSymbol)
+    node = graph[name]
+    getvalue(graph, node, getoperation(node))
+end
+getvalue(::CompiledGraph, ::CompiledNode, op::Operation) = getvalue(op) # specific implementations should dispatch on this method

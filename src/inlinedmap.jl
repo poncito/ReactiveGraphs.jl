@@ -21,7 +21,7 @@ generated symbol that identifies the node.
 """
 function inlinedmap(f, arg::Node, args::Node...; name = nothing)
     uniquename = genname(name)
-    argtypes = getoperationtype.((arg, args...))
+    argtypes = eltype.((arg, args...))
     T = Base._return_type(f, Tuple{argtypes...})
     op = InlinedMap(T, f)
     Node(uniquename, op, arg, args...)
@@ -44,10 +44,7 @@ function generate(
     end
 end
 
-@generated function getvalue(graph::CompiledGraph, name::Symbol, imap::InlinedMap)
-    node = graph[name]
-    names = getparentnames(node)
-    quote
-        Base.@ncall $(length(names)) imap.f i -> (getvalue(graph, $(Meta.quot(names[i]))))
-    end
+function getvalue(graph::CompiledGraph, node::CompiledNode, imap::InlinedMap)
+    parentnames = getparentnames(node) .|> TypeSymbol
+    imap.f((getvalue(graph, n) for n in parentnames)...)
 end

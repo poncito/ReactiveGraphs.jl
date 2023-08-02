@@ -15,7 +15,7 @@ function select(x::Node, condition::Node; name::Union{Nothing,Symbol} = nothing)
         throw(ErrorException("eltype(condition) is $(eltype(condition)), expected Bool"))
     end
     uniquename = genname(name)
-    op = Selecter{getoperationtype(x)}()
+    op = Selecter{eltype(x)}()
     Node(uniquename, op, x, condition)
 end
 
@@ -37,9 +37,9 @@ function select(f::Function, x::Node; name::Union{Nothing,Symbol} = nothing)
     select(x, condition; name)
 end
 
-function getvalue(node::ListNode, ::Selecter)
-    node_name, _ = getparentnames(node)
-    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
+function getvalue(graph::CompiledGraph, node::CompiledNode, ::Selecter)
+    parent_name = getparentnames(node) |> first |> TypeSymbol
+    getvalue(graph, parent_name)
 end
 
 function generate(
@@ -50,7 +50,7 @@ function generate(
 )
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    args = [:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames]
+    args = [:(getvalue(graph, $(TypeSymbol(n)))) for n in parentnames]
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)

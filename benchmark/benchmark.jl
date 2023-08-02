@@ -1,4 +1,3 @@
-using Revise
 using ReactiveGraphs
 using BenchmarkTools
 
@@ -15,8 +14,9 @@ n5 = lag(1, n4)
 s1 = Source(i1)
 s2 = Source(i2)
 s3 = Source(i3)
-s1[] = 1
-s2[] = true
-s3[] = true
-v = 1
-@benchmark setindex!($s1, $v)
+g, s1, s2, s3 = compile(i1, i2, i3)
+push!(g, s1, 1)
+push!(g, s2, true)
+push!(g, s3, true)
+
+@benchmark push!($g, $s1, 1)

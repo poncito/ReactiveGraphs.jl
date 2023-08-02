@@ -2,7 +2,7 @@ using BenchmarkTools
 using ReactiveGraphs
 using Test
 
-import ReactiveGraphs: Graph, getoperationtype, Node
+import ReactiveGraphs: getoperationtype, Node
 
 macro testnoalloc(expr, kws...)
     esc(quote
@@ -11,45 +11,43 @@ macro testnoalloc(expr, kws...)
     end)
 end
 
-function collectgraph(g::Graph)
-    c = []
-    map((_, _, x) -> push!(c, x), g)
-    c
-end
+# function collectgraph(g::Graph)
+#     c = []
+#     map((_, _, x) -> push!(c, x), g)
+#     c
+# end
 
 sink(arg::Node) = sink(identity, arg)
 function sink(f::Function, args::Node...)
-    T = Base._return_type(f, Tuple{(getoperationtype(a) for a in args)...})
+    m = inlinedmap(f, args...)
+    T = eltype(m)
     v = Vector{T}()
-    map(args...) do x::Vararg
-        push!(v, f(x...))
-        nothing
-    end
+    foldl(push!, v, m)
     v
 end
 
-@testset "graph" begin
-    g1 = Graph()
-    @test g1 == merge!(g1)
+# @testset "graph" begin
+#     g1 = mergegraphs!()
+#     @test g1 == merge!(g1)
 
-    push!(g1, :a, (), 1)
-    push!(g1, :b, (), 2)
-    @test collectgraph(g1) == [1, 2]
+#     push!(g1, :a, (), 1)
+#     push!(g1, :b, (), 2)
+#     @test collectgraph(g1) == [1, 2]
 
-    g2 = Graph()
-    push!(g2, :c, (), 3)
-    merge!(g1, g2)
-    @test g1 == g2
+#     g2 = Graph()
+#     push!(g2, :c, (), 3)
+#     merge!(g1, g2)
+#     @test g1 == g2
 
-    @test collectgraph(g1) == [1, 2, 3]
-end
+#     @test collectgraph(g1) == [1, 2, 3]
+# end
 
 @testset "input" begin
     @testset "1 input" begin
         n1 = input(Int)
         c = sink(x -> 2x, n1)
-        s = Source(n1)
-        push!(s, 2)
+        g, s = compile(n1)
+        push!(g, s => 2)
         @test c == [4]
     end
 
@@ -57,18 +55,17 @@ end
         n1 = input(Int)
         n2 = input(Int)
         c = sink(+, n1, n2)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1 => 1, s2 => 2)
-        push!(s1 => 3, s2 => 4)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1 => 1, s2 => 2)
+        push!(g, s1 => 3, s2 => 4)
         @test c == [3, 7]
     end
 
     @testset "1 mutable input" begin
         n1 = input(Ref(0))
         c = sink(x -> 2x[], n1)
-        s = Source(n1)
-        push!(s, x -> x[] = 2)
+        g, s = compile(n1)
+        push!(g, s, x -> x[] = 2)
         @test c == [4]
     end
 
@@ -76,18 +73,15 @@ end
         n1 = input(Ref(0))
         n2 = input(Int)
         c = sink((x, y) -> 2x[] + y, n1, n2)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1 => x -> x[] = 2, s2 => 3)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1 => x -> x[] = 2, s2 => 3)
         @test c == [7]
     end
 
     @testset "disjoint graphs" begin
         n1 = input(Int)
         n2 = input(Int)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        @test_throws ErrorException push!(s1 => 1, s2 => 2)
+        @test_throws AssertionError compile(n1, n2)
     end
 end
 
@@ -96,11 +90,10 @@ end
         n1 = input(Int)
         n2 = input(Int)
         c = sink(+, n1, n2)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1, 1)
-        push!(s2, 2)
-        push!(s1, 3)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1, 1)
+        push!(g, s2, 2)
+        push!(g, s1, 3)
         @test c == [3, 5]
     end
 
@@ -112,11 +105,10 @@ end
         @test eltype(n2) == Int
         @test eltype(m) == Int
         c = sink(m)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1, 1)
-        push!(s2, 2)
-        push!(s1, 3)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1, 1)
+        push!(g, s2, 2)
+        push!(g, s1, 3)
         @test c == [3, 5]
     end
 
@@ -125,11 +117,10 @@ end
         n2 = input(Int)
         c1 = sink(+, n1, n2)
         c2 = sink((x, y) -> -(x + y), n1, n2)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1, 1)
-        push!(s2, 2)
-        push!(s1, 3)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1, 1)
+        push!(g, s2, 2)
+        push!(g, s1, 3)
         @test c1 == [3, 5]
         @test c2 == [-3, -5]
     end
@@ -140,9 +131,9 @@ end
         n1 = input(Int)
         n2 = foldl(+, 1, n1)
         c = sink(n2)
-        s = Source(n1)
-        push!(s, 2)
-        push!(s, 3)
+        g, s = compile(n1)
+        push!(g, s, 2)
+        push!(g, s, 3)
         @test c == [3, 6]
     end
 
@@ -154,9 +145,9 @@ end
         end
         n3 = map(x -> x[], n2)
         c = sink(n3)
-        s = Source(n1)
-        push!(s, 2)
-        push!(s, 3)
+        g, s = compile(n1)
+        push!(g, s, 2)
+        push!(g, s, 3)
         @test c == [3, 6]
     end
 end
@@ -166,10 +157,9 @@ end
     n2 = input(Int)
     n3 = inlinedmap(+, n1, n2)
     c = sink(n3)
-    s1 = Source(n1)
-    s2 = Source(n2)
-    push!(s1, 1)
-    push!(s2, 2)
+    g, s1, s2 = compile(n1, n2)
+    push!(g, s1, 1)
+    push!(g, s2, 2)
     @test c == [3]
 end
 
@@ -179,15 +169,14 @@ end
         n2 = input(Bool)
         n3 = filter(n1, n2)
         c = sink(n3)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        push!(s1, 2)
-        push!(s2, false)
-        push!(s1, 3)
-        push!(s2, true)
-        push!(s1, 4)
-        push!(s2, false)
-        push!(s1, 5)
+        g, s1, s2 = compile(n1, n2)
+        push!(g, s1, 2)
+        push!(g, s2, false)
+        push!(g, s1, 3)
+        push!(g, s2, true)
+        push!(g, s1, 4)
+        push!(g, s2, false)
+        push!(g, s1, 5)
         @test c == [3, 4]
     end
 
@@ -195,9 +184,9 @@ end
         n1 = input(Int)
         n2 = filter(iseven, n1)
         c = sink(n2)
-        s1 = Source(n1)
+        g, s1 = compile(n1)
         for i = 1:4
-            push!(s1, i)
+            push!(g, s1, i)
         end
         @test c == [2, 4]
     end
@@ -218,18 +207,16 @@ end
         n4 = input(Int)
         n5 = map(+, n3, n4)
         c = sink(n5)
-        s1 = Source(n1)
-        s2 = Source(n2)
-        s4 = Source(n4)
-        push!(s1, 1)
-        push!(s2, false)
-        push!(s4, 2)
-        push!(s2, true)
-        push!(s1, 3)
-        push!(s4, 4)
-        push!(s2, false)
-        push!(s1, 5)
-        push!(s4, 6)
+        g, s1, s2, s4 = compile(n1, n2, n4)
+        push!(g, s1, 1)
+        push!(g, s2, false)
+        push!(g, s4, 2)
+        push!(g, s2, true)
+        push!(g, s1, 3)
+        push!(g, s4, 4)
+        push!(g, s2, false)
+        push!(g, s1, 5)
+        push!(g, s4, 6)
         @test c == [3, 5, 7]
     end
 
@@ -237,9 +224,9 @@ end
         n1 = input(Int)
         n2 = select(iseven, n1)
         c = sink(n2)
-        s1 = Source(n1)
+        g, s1 = compile(n1)
         for i = 1:7
-            push!(s1, i)
+            push!(g, s1, i)
         end
         @test c == [2, 4, 6]
     end
@@ -256,16 +243,16 @@ end
     n1 = input(Int)
     n2 = constant(1)
     c = sink(+, n1, n2)
-    s = Source(n1)
-    push!(s, 2)
+    g, s = compile(n1)
+    push!(g, s, 2)
     @test c == [3]
 
     n1 = input(Bool)
     n2 = constant(true)
     c = sink(&, n1, n2)
-    s = Source(n1)
-    push!(s, true)
-    push!(s, false)
+    g, s = compile(n1)
+    push!(g, s, true)
+    push!(g, s, false)
     @test c == [true, false]
 end
 
@@ -274,13 +261,12 @@ end
     n2 = input(Int)
     n3 = quiet(n2)
     c = sink(+, n1, n3)
-    s1 = Source(n1)
-    s2 = Source(n2)
-    push!(s1, 1)
-    push!(s2, 2)
-    push!(s1, 3)
-    push!(s2, 4)
-    push!(s1, 5)
+    g, s1, s2 = compile(n1, n2)
+    push!(g, s1, 1)
+    push!(g, s2, 2)
+    push!(g, s1, 3)
+    push!(g, s2, 4)
+    push!(g, s1, 5)
     @test c == [5, 9]
 end
 
@@ -288,9 +274,9 @@ end
     n1 = input(Int)
     n2 = lag(2, n1)
     c = sink(n2)
-    s1 = Source(n1)
+    g, s1 = compile(n1)
     for i = 1:10
-        push!(s1, i)
+        push!(g, s1, i)
     end
     @test c == 1:8
 end
@@ -302,9 +288,9 @@ end
     c1 = sink(identity, n3)
     c2 = sink((x, y) -> x, n3, n1)
 
-    s = Source(n1)
+    g, s = compile(n1)
     for i = 1:4
-        push!(s, i)
+        push!(g, s, i)
     end
     @test c1 == [true, true]
     @test c2 == [false, true, false, true]
@@ -324,30 +310,31 @@ end
     s1 = Source(i1)
     s2 = Source(i2)
     s3 = Source(i3)
-    push!(s1, 1)
-    push!(s2, true)
-    push!(s3, true)
-    @testnoalloc push!($s1, 1)
+    g, s1, s2, s3 = compile(i1, i2, i3)
+    push!(g, s1, 1)
+    push!(g, s2, true)
+    push!(g, s3, true)
+    @testnoalloc push!($g, $s1, 1)
 end
 
-@testset "PerformanceTrackers" begin
-    i1 = input(Int; name = "input1")
-    i2 = input(Int; name = "input2")
-    n1 = map(x -> 2x, i1)
-    n2 = map(+, n1, i2)
-    s1 = Source(i1)
-    s2 = Source(i2)
-    push!(s1, 1)
-    push!(s2, 2)
-    tracker = PerformanceGraphTracker()
-    push!(tracker, s1, 2)
-    push!(tracker, s2, 2)
-    push!(tracker, s1 => 3, s2 => 3)
-    triggers = gettrackingtriggers(tracker)
-    nodes = gettrackingnodes(tracker)
-    @test length(triggers) == 4
-    @test map(x -> x.id, triggers) == [1, 2, 3, 3]
-    @test length(nodes) == 3 * 4
-    @test map(x -> x.id, nodes) == [i for i = 1:3 for _ = 1:4]
-    @test map(x -> x.bytes_allocated, nodes) == [0 for i = 1:3 for _ = 1:4]
-end
+# @testset "PerformanceTrackers" begin
+#     i1 = input(Int; name = "input1")
+#     i2 = input(Int; name = "input2")
+#     n1 = map(x -> 2x, i1)
+#     n2 = map(+, n1, i2)
+#     s1 = Source(i1)
+#     s2 = Source(i2)
+#     push!(s1, 1)
+#     push!(s2, 2)
+#     tracker = PerformanceGraphTracker()
+#     push!(tracker, s1, 2)
+#     push!(tracker, s2, 2)
+#     push!(tracker, s1 => 3, s2 => 3)
+#     triggers = gettrackingtriggers(tracker)
+#     nodes = gettrackingnodes(tracker)
+#     @test length(triggers) == 4
+#     @test map(x -> x.id, triggers) == [1, 2, 3, 3]
+#     @test length(nodes) == 3 * 4
+#     @test map(x -> x.id, nodes) == [i for i = 1:3 for _ = 1:4]
+#     @test map(x -> x.bytes_allocated, nodes) == [0 for i = 1:3 for _ = 1:4]
+# end

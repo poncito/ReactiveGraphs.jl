@@ -11,6 +11,7 @@ export updated
 
 export PerformanceGraphTracker
 export gettrackingnodes, gettrackingtriggers
+export compile
 
 macro tryinline(e)
     @static if VERSION >= v"1.8"
@@ -34,11 +35,11 @@ end
 
 TypeOrValue{X} = Union{X,Type{<:X}}
 
-# struct TypeSymbol{x}
-#     TypeSymbol(x::Symbol) = new{x}()
-# end
+struct TypeSymbol{x}
+    TypeSymbol(x::Symbol) = new{x}()
+end
 
-# getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
+getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
 
 include("operations.jl")
 include("graph.jl")

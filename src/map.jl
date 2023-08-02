@@ -5,7 +5,6 @@ mutable struct Map{T,F} <: Operation{T}
 end
 
 @inline getvalue(x::Map) = x.x
-@inline getvalue(::ListNode, element::Map) = getvalue(element)
 
 @inline function update!(m::Map, args...)
     @tryinline m.x = m.f(args...)
@@ -32,7 +31,7 @@ end
 function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Map})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    args = (:(getvalue(graph, $n)) for n in parentnames)
+    args = (:(getvalue(graph, $(TypeSymbol(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
@@ -40,7 +39,7 @@ function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type
     quote
         $initialized_s = $condition_initialized
         $updated_s = if $condition_initialized & $condition_updated
-            $nodename_s = graph[$name]
+            $nodename_s = getoperation(graph, $(TypeSymbol(name)))
             $(Expr(:call, :update!, nodename_s, args...))
             true
         else
