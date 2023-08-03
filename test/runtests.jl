@@ -324,7 +324,7 @@ end
     g, s1, s2 = compile(i1, i2)
     push!(g, s1, 1)
     push!(g, s2, 2)
-    g, s1, s2 = compile(i1, i2; tracker=PerformanceGraphTracker())
+    g, s1, s2 = compile(i1, i2; tracker = PerformanceGraphTracker())
     push!(g, s1, 2)
     push!(g, s2, 2)
     push!(g, s1 => 3, s2 => 3)
@@ -332,5 +332,5 @@ end
     @test length(nodes) == 3 * 4
     @test map(x -> x.id, nodes) == [i for i = 1:3 for _ = 1:4]
     @test map(x -> x.bytes_allocated, nodes) == [0 for i = 1:3 for _ = 1:4]
-    @test map(x -> x.isinput, nodes) == [(i in x) for x in [(1,), (3,), (1,3)] for i = 1:4]
+    @test map(x -> x.isinput, nodes) == [(i in x) for x in [(1,), (3,), (1, 3)] for i = 1:4]
 end

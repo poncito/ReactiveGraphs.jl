@@ -21,12 +21,8 @@ mutable struct PerformanceGraphTracker <: AbstractGraphTracker
     @tryconst total_bytes_allocated::Base.RefValue{Int64}
 end
 
-PerformanceGraphTracker() = PerformanceGraphTracker(
-    TrackingNode[],
-    zero(Int64),
-    zero(UInt64),
-    Ref(zero(Int64)),
-)
+PerformanceGraphTracker() =
+    PerformanceGraphTracker(TrackingNode[], zero(Int64), zero(UInt64), Ref(zero(Int64)))
 
 gettrackingnodes(pm::PerformanceGraphTracker) = pm.trackingnodes
 

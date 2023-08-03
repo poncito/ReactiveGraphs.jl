@@ -1,14 +1,20 @@
 struct CompiledNode{name,parentnames,Op<:Operation}
     operation::Op
-    function CompiledNode(name::Symbol, parentnames::NTuple{N,Symbol}, operation::Operation) where {N}
-        new{name, parentnames, typeof(operation)}(operation)
+    function CompiledNode(
+        name::Symbol,
+        parentnames::NTuple{N,Symbol},
+        operation::Operation,
+    ) where {N}
+        new{name,parentnames,typeof(operation)}(operation)
     end
 end
 
 getname(::TypeOrValue{CompiledNode{name}}) where {name} = name
 getparentnames(::TypeOrValue{CompiledNode{name,parentnames}}) where {name,parentnames} =
     parentnames
-getoperationtype(::TypeOrValue{CompiledNode{name,parentnames,Op}}) where {name,parentnames,Op} = Op
+getoperationtype(
+    ::TypeOrValue{CompiledNode{name,parentnames,Op}},
+) where {name,parentnames,Op} = Op
 getoperation(n::CompiledNode) = n.operation
 
 struct CompiledGraph{N,T<:NTuple{N,CompiledNode},Tr<:AbstractGraphTracker}
@@ -19,7 +25,7 @@ end
 nodetypes(::TypeOrValue{CompiledGraph{N,T}}) where {N,T} = T.parameters
 gettrackingnodes(g::CompiledGraph) = gettrackingnodes(g.tracker)
 
-@generated function Base.getindex(g::CompiledGraph{N}, ::TypeSymbol{name}) where {N, name}
+@generated function Base.getindex(g::CompiledGraph{N}, ::TypeSymbol{name}) where {N,name}
     for (i, node) in nodetypes(g) |> enumerate
         getname(node) == name && return :(g.nodes[$i])
     end
@@ -38,7 +44,7 @@ getinputname(::TypeOrValue{Source{inputname,T}}) where {inputname,T} = inputname
 
 function Source(node::Node)
     @assert node.operation isa Input
-    Source{node.name, eltype(node.operation)}()
+    Source{node.name,eltype(node.operation)}()
 end
 
 """
@@ -88,13 +94,15 @@ julia> i1 = input(Int)
 ```
 
 """
-function compile(inputs::Node...; tracker::AbstractGraphTracker=NullGraphTracker())
-    @assert !isempty(inputs) 
+function compile(inputs::Node...; tracker::AbstractGraphTracker = NullGraphTracker())
+    @assert !isempty(inputs)
     sources = Source.(inputs)
 
-    @assert allequal(map(x->x.graph.ref, inputs))
+    @assert allequal(map(x -> x.graph.ref, inputs))
     nodes = inputs[1].graph.ref[]
-    compilednodes = Tuple(CompiledNode(node.name, Tuple(node.parentnames), node.operation) for node in nodes)
+    compilednodes = Tuple(
+        CompiledNode(node.name, Tuple(node.parentnames), node.operation) for node in nodes
+    )
     compiledgraph = CompiledGraph(compilednodes, tracker)
 
     compiledgraph, sources...
@@ -126,7 +134,10 @@ function generate!(
 ) where {name,parentnames,Op}
     e = generate(inputnames, name, parentnames, Op)
     append!(expr.args, e.args)
-    push!(expr.args, :(on_update_node!(graph.tracker, $(Meta.quot(name)), $(name in inputnames))))
+    push!(
+        expr.args,
+        :(on_update_node!(graph.tracker, $(Meta.quot(name)), $(name in inputnames))),
+    )
     expr
 end
 
