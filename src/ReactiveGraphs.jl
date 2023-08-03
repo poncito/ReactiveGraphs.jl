@@ -10,7 +10,7 @@ export lag
 export updated
 
 export PerformanceGraphTracker
-export gettrackingnodes, gettrackingtriggers
+export gettrackingnodes
 
 macro tryinline(e)
     @static if VERSION >= v"1.8"
