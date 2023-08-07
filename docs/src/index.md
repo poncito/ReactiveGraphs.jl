@@ -73,15 +73,16 @@ end
 
 To use this graph, we need to push values into the two inputs.
 We can either push a new value, or a function that mutates the current value.
-To do so, we need to wrap our inputs into a `Source`, and push to the sources,
-and not the inputs directly.
+
+To do so, the graph is compiled by calling `compile` on the inputs.
+The methods returns the compiled graph, and some empty objects that identify
+the inputs in the graph.
 
 ```jldoctest; output = false
-s1 = Source(input_1) # Captures the current state of the graph. Nodes must not be added afterwards.
-s2 = Source(input_2) # Captures the current state of the graph. Nodes must not be added afterwards.
-push!(s1, 1) # prints "node 1: 2". The second node cannot be evaluated since the data is missing
-push!(s2, x -> x[] = 2)# prints "node 2: 5"
-push!(s1, 3) # prints "node 1: 6" "node 2: 11".
+g, s1, s2 = compile(input_1, input_2)
+push!(g, s1, 1) # prints "node 1: 2". The second node cannot be evaluated since the data is missing
+push!(g, s2, x -> x[] = 2)# prints "node 2: 5"
+push!(g, s1, 3) # prints "node 1: 6" "node 2: 11".
 
 # output
 
@@ -97,14 +98,15 @@ DocTestSetup = quote
 end
 ```
 
-Introducing this wrapping may seem a bit cumbersome to the user.
+Introducing this compilation step may seem a bit cumbersome to the user.
 But it is used to achieve high performance.
-When creating a source, the current state of the graph is being captured in the
-parameters of the `Source` type.
-This allows to dispatch the subsequent calls to `push!` on performant generated methods.
-This capture of the the graph implies that we first need to build the complete graph
-before wrapping the inputs into sources.
-Otherwise, the nodes added subsequently will be ignored.
+To update the graph efficiently, we need to generate methods that are specific
+to the topology of the graph.
+When compiling the graph, we simply generate an object whose type encodes this topology.
+Hence, the update methods can simply be implemented as generated functions, based on the
+type of the graph.
+
+Note that, the nodes added subsequently to the compiled graph will be ignored.
 
 As explained, in the introduction,
 each time an input is updated, the data will flow down the graph, 
@@ -129,7 +131,8 @@ n2 = input(Ref(0))
 map(n1, n2) do x, y
     println(x + y[])
 end
-push!(Source(n1) => 1, Source(n2) => (x->x[]=2)) # prints "3"
+g, s1, s2 = compile(n1, n2)
+push!(g, s1 => 1, s2 => (x->x[]=2)) # prints "3"
 
 # output
 
@@ -157,9 +160,9 @@ input_1 = input(Float64)
 filtered = filter(x->!isnan(x), input_1)
 n = map(x->println("new update: $x"), filtered)
 
-s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-push!(s1, 1.0) # prints "new update: 1.0"
-push!(s1, NaN) # prints nothing 
+g, s1= compile(input_1)
+push!(g, s1, 1.0) # prints "new update: 1.0"
+push!(g, s1, NaN) # prints nothing 
 
 # output
 
@@ -188,12 +191,11 @@ selected = select(x->!isnan(x), input_1)
 map((x,y) -> println("filtered"), filtered, input_2)
 map((x,y) -> println("selected"), selected, input_2)
     
-s1 = Source(input_1) # compiles the graph. Nodes must not be added afterwards.
-s2 = Source(input_2) # compiles the graph. Nodes must not be added afterwards.
-push!(s1, 1.0) # prints nothing 
-push!(s2, nothing) # prints "filtered" and then "selected"
-push!(s1, NaN) # prints nothing 
-push!(s2, nothing) # prints "filtered" only
+g, s1, s2 = compile(input_1, input_2)
+push!(g, s1, 1.0) # prints nothing 
+push!(g, s2, nothing) # prints "filtered" and then "selected"
+push!(g, s1, NaN) # prints nothing 
+push!(g, s2, nothing) # prints "filtered" only
 
 # output
 
@@ -219,7 +221,8 @@ x1 = input(nothing)
 x2 = map(x->println("x2"), x1)
 x3 = map(x->println("x3"), x1)
 x4 = map((x,y)->println("x4"), x2, x3)
-push!(Source(x1), nothing) # prints x2 x3 x4
+g, s1 = compile(x1)
+push!(g, s1, nothing) # prints x2 x3 x4
 
 # output
 x2
@@ -255,8 +258,8 @@ BenchmarkTools.Trial: 10000 samples with 195 evaluations.
 
 julia> x1 = input(Int)
        x2 = map(x->x+1, x1)
-       s = Source(x1)
-       @benchmark push!($x1, 2)
+       g, s = compile(x1)
+       @benchmark push!($g, $x1, 2)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.
  Range (min … max):  1.500 ns … 10.625 ns  ┊ GC (min … max): 0.00% … 0.00%
  Time  (median):     1.542 ns              ┊ GC (median):    0.00%
@@ -285,14 +288,12 @@ julia>i1 = input(Int)
       n4 = inlinedmap(+,n2,n3)
       n5 = lag(1, n4)
       
-      s1 = Source(i1)
-      s2 = Source(i2)
-      s3 = Source(i3)
-      push!(s1, 1)
-      push!(s2, true)
-      push!(s3, true)
+      g, s1, s2, s3 = compile(i1, i2, i3)
+      push!(g, s1, 1)
+      push!(g, s2, true)
+      push!(g, s3, true)
       v = 1
-      @benchmark push!($s1, $v)
+      @benchmark push!($g, $s1, $v)
 BenchmarkTools.Trial: 10000 samples with 1000 evaluations.                                      
 Range (min … max):  8.708 ns … 27.625 ns  ┊ GC (min … max): 0.00% … 0.00%                      
 Time  (median):     8.792 ns              ┊ GC (median):    0.00%                              

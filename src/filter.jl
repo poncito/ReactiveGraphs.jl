@@ -15,7 +15,7 @@ function Base.filter(x::Node, condition::Node; name = nothing)
         throw(ErrorException("eltype(condition) is $(eltype(condition)), expected Bool"))
     end
     uniquename = genname(name)
-    op = Filter{getoperationtype(x)}()
+    op = Filter{eltype(x)}()
     Node(uniquename, op, x, condition)
 end
 
@@ -37,15 +37,15 @@ function Base.filter(f::Function, x::Node; name = nothing)
     filter(x, condition; name)
 end
 
-function getvalue(node::ListNode, ::Filter)
-    node_name, _ = getparentnames(node)
-    getvalue(node, TypeSymbol(node_name)) # todo: avoid starting from the leaf
+function getvalue(graph::CompiledGraph, node::CompiledNode, ::Filter)
+    parent_name = getparentnames(node) |> first |> TypeSymbol
+    getvalue(graph, parent_name)
 end
 
 function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Filter})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    args = [:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames]
+    args = [:(getvalue(graph, $(TypeSymbol(n)))) for n in parentnames]
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)

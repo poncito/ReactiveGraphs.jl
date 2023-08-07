@@ -44,7 +44,7 @@ julia> i = input(Int)
 ```
 """
 function lag(n::Integer, node::Node; name = nothing)
-    T = getoperationtype(node)
+    T = eltype(node)
     lagnode = foldl(Lag(T, n), node; name) do state, x
         push!(state, x)
         state

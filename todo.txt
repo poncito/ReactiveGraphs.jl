@@ -1,0 +1,5 @@
+# refacto of the logic
+- how to name the edges? can we use integers instead of Symbols, and make the name optional?
+getelementtype -> getoperationtype
+getelement->getoperation
+getnode => getedge

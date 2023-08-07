@@ -66,8 +66,6 @@ function input(x::T; name::Union{Nothing,Symbol} = nothing) where {T}
     Node(uniquename, op)
 end
 
-getvalue(::ListNode, element::Input) = getvalue(element)
-
 function generate(
     inputnames::NTuple{<:Any,Symbol},
     name::Symbol,
@@ -82,7 +80,7 @@ function generate(
 
     expr = Expr(:quote)
     push!(expr.args, :($updated_s = $updated))
-    push!(expr.args, :($nodename_s = getnode(list, $(TypeSymbol(name)))))
+    push!(expr.args, :($nodename_s = getoperation(graph, $(TypeSymbol(name)))))
     if updated
         push!(
             expr.args,

@@ -3,7 +3,6 @@ mutable struct Foldl{TState,F} <: Operation{TState}
     state::TState
 end
 @inline getvalue(x::Foldl) = x.state
-@inline getvalue(::ListNode, element::Foldl) = getvalue(element)
 
 @inline function update!(m::Foldl, args...)
     @tryinline state = m.f(m.state, args...)
@@ -39,14 +38,14 @@ end
 function generate(::Any, name::Symbol, parentnames::NTuple{<:Any,Symbol}, ::Type{<:Foldl})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)
-    args = (:(getvalue(list, $(TypeSymbol(n)))) for n in parentnames)
+    args = (:(getvalue(graph, $(TypeSymbol(n)))) for n in parentnames)
     condition_updated = Expr(:call, :|, (Symbol(:updated, n) for n in parentnames)...)
     condition_initialized =
         Expr(:call, :&, (Symbol(:initialized, n) for n in parentnames)...)
     nodename_s = Symbol(:node, name)
     quote
         $updated_s = if $condition_initialized & $condition_updated
-            $nodename_s = getnode(list, $(TypeSymbol(name)))
+            $nodename_s = getoperation(graph, $(TypeSymbol(name)))
             $(Expr(:call, :update!, nodename_s, args...))
             true
         else

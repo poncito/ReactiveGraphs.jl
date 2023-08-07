@@ -30,8 +30,6 @@ function constant(x; name = nothing)
     Node(uniquename, op)
 end
 
-getvalue(::ListNode, element::AbstractConstant) = getvalue(element)
-
 function generate(::Any, name::Symbol, parentnames::Tuple{}, ::Type{<:AbstractConstant})
     updated_s = Symbol(:updated, name)
     initialized_s = Symbol(:initialized, name)

@@ -1,7 +1,7 @@
 module ReactiveGraphs
 
+export compile
 export input
-export Source
 export constant
 export inlinedmap
 export quiet
@@ -10,7 +10,7 @@ export lag
 export updated
 
 export PerformanceGraphTracker
-export gettrackingnodes, gettrackingtriggers
+export gettrackingnodes
 
 macro tryinline(e)
     @static if VERSION >= v"1.8"
@@ -38,17 +38,14 @@ struct TypeSymbol{x}
     TypeSymbol(x::Symbol) = new{x}()
 end
 
-getsymbol(::TypeOrValue{TypeSymbol{x}}) where {x} = x
-
-include("graph.jl")
 include("operations.jl")
+include("graph.jl")
 include("trackers.jl")
 include("compilation.jl")
 
 genname(::Nothing) = gensym()
 genname(s::Symbol) = gensym(s)
 genname(s::AbstractString) = gensym(string(s))
-getoperationtype(node::Node) = getnode(node) |> getelement |> eltype
 
 include("input.jl")
 include("map.jl")
