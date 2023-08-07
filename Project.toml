@@ -1,7 +1,7 @@
 name = "ReactiveGraphs"
 uuid = "e49d8811-4385-4fad-be34-8522254608f3"
 authors = ["Romain Poncet <romain.pct@gmail.com>"]
-version = "0.1.0"
+version = "0.1.1"
 
 [compat]
 julia = "1.6"
