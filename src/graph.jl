@@ -34,6 +34,7 @@ mergegraphs!(node::Node) = node.graph
 function mergegraphs!(node1::Node, node2::Node, nodes::Node...)
     if node1.graph.ref != node2.graph.ref
         append!(node1.graph.ref[], node2.graph.ref[])
+        empty!(node2.graph.ref[])
         node2.graph.ref = node1.graph.ref
     end
     mergegraphs!(node1, nodes...)
